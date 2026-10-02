@@ -18,7 +18,7 @@ rangel/
         ├── main/java/       # RangelApplication
         ├── main/resources/
         │   ├── application.properties
-        │   └── db/migration/ # V1–V30
+        │   └── db/migration/ # V1–V40
         └── test/java/
 ```
 
@@ -114,6 +114,34 @@ las columnas no marcadas son obligatorias, incluidas `encounters.ended_at`,
 proporcionarse estas fechas al insertar registros; admitir procesos abiertos
 sin fecha de finalización requeriría acordar un cambio del esquema.
 
+## Entrega 4: V31 a V40
+
+| Versión | Tabla |
+| --- | --- |
+| V31 | medication_routes |
+| V32 | assessment_types |
+| V33 | consent_types |
+| V34 | diagnostic_systems |
+| V35 | provider_models_ai |
+| V36 | ai_models |
+| V37 | ai_run_statuses |
+| V38 | conversations_statuses |
+| V39 | priorities |
+| V40 | sender_types |
+
+Se aplica UNIQUE a `code` en medication_routes, assessment_types y
+diagnostic_systems, según la marca U. No se añaden restricciones UNIQUE a
+consent_types ni a los nombres de proveedores o catálogos de chat e IA.
+
+En provider_models_ai se conserva `"isActive"` con su grafía exacta y los
+TIMESTAMP de auditoría. `razon_social` usa VARCHAR sin longitud, porque el
+diagrama no especifica un límite. PostgreSQL permite esta declaración.
+
+`ai_models.provider_model_id` conserva VARCHAR(50), mientras que
+`provider_models_ai.id` es UUID. No se crea una FK incompatible: esa relación
+queda pendiente de corregir los tipos mediante una decisión sobre el esquema.
+Las tablas de este bloque se crean antes de las tablas de chat que las usan.
+
 ## Conexión y ejecución
 
 La base PostgreSQL debe existir. Antes de iniciar el proyecto, definir en la
@@ -138,5 +166,5 @@ ORDER BY installed_rank;
 
 La ejecución contra PostgreSQL está pendiente de los datos de conexión. Este
 bloque crea estructura, no transfiere registros desde otra base de datos.
-Después del commit de este bloque se continúa con V31–V40. No modificar SQL
+Después del commit de este bloque se continúa con V41–V50. No modificar SQL
 que ya se haya aplicado; los cambios posteriores requieren una nueva versión.
