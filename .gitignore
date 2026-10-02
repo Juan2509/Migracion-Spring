@@ -7,6 +7,9 @@
 !/mvnw.cmd
 !/.mvn/
 !/src/
+!/domain/
+!/application/
+!/infrastructure/
 !/README.md
 !/docs/
 
