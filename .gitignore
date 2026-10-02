@@ -1,33 +1,80 @@
-HELP.md
+# En la raiz, incluir solo archivos y carpetas del entregable.
+/*
+!/.gitignore
+!/.gitattributes
+!/pom.xml
+!/mvnw
+!/mvnw.cmd
+!/.mvn/
+!/src/
+!/README.md
+!/docs/
+
+# Material de consulta y archivos descargados.
+/revision_adjuntos/
+/HELP.md
+*.zip
+*.7z
+*.rar
+
+# Compilacion, paquetes generados y caches.
 target/
-.mvn/wrapper/maven-wrapper.jar
-!**/src/main/**/target/
-!**/src/test/**/target/
+build/
+out/
+dist/
+.gradle/
+*.class
+*.jar
+*.war
+*.ear
+# Conservar el JAR del wrapper si la distribucion de Maven lo requiere.
+!/.mvn/wrapper/maven-wrapper.jar
 
-### STS ###
-.apt_generated
-.classpath
-.factorypath
-.project
-.settings
-.springBeans
-.sts4-cache
+# Credenciales y configuracion local; permitir plantillas sin secretos.
+.env
+.env.*
+!.env.example
+!.env.sample
+!/.env.example
+!/.env.sample
+application-local.properties
+application-local.yml
+application-local.yaml
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
 
-### IntelliJ IDEA ###
-.idea
+# Configuracion personal de editores.
+.vscode/
+.idea/
 *.iws
 *.iml
 *.ipr
+.apt_generated/
+.classpath
+.factorypath
+.project
+.settings/
+.springBeans
+.sts4-cache/
+nbproject/private/
+nbbuild/
+nbdist/
+.nb-gradle/
 
-### NetBeans ###
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
-build/
-!**/src/main/**/build/
-!**/src/test/**/build/
-
-### VS Code ###
-.vscode/
+# Logs, temporales y archivos del sistema operativo.
+*.log
+*.tmp
+*.temp
+*.bak
+*.orig
+*.rej
+*.swp
+*.swo
+*~
+.DS_Store
+._*
+Thumbs.db
+Desktop.ini
