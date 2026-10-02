@@ -4,6 +4,47 @@ Proyecto Spring Boot con migraciones Flyway para PostgreSQL. El diagrama de
 MindConnect es la fuente del esquema; los proyectos compartidos se utilizan como
 referencias de organización.
 
+## Guía de lectura
+
+- [Funcionamiento](#funcionamiento)
+- [Estructura y responsabilidades](#organización-del-proyecto)
+- [Inventario de las 52 migraciones](#entrega-1-v1-a-v10)
+- [Configuración y ejecución](#conexión-y-ejecución)
+- [Cómo reconstruir el proyecto](#cómo-reconstruir-el-proyecto)
+- [Cómo reproducir el trabajo desde el diagrama](#cómo-reproducir-el-trabajo-desde-el-diagrama)
+- [Problemas frecuentes](#problemas-frecuentes)
+
+## Funcionamiento
+
+El entregable crea el esquema de MindConnect mediante 52 archivos SQL
+versionados. Actualmente contiene la estructura modular y las migraciones;
+los módulos de negocio todavía no implementan casos de uso, entidades JPA
+ni una API. Los scripts crean tablas y restricciones, sin cargar datos iniciales
+ni trasladar registros de otra base.
+
+Al iniciar `RangelApplication`, Spring Boot obtiene la conexión desde las
+variables de entorno y Flyway busca SQL en `classpath:db/migration`.
+Flyway compara los archivos con su tabla `flyway_schema_history`, valida las
+migraciones registradas y aplica las pendientes por número de versión:
+V1, V2, …, V52. El orden permite crear cada tabla antes de que otra la referencie.
+
+En una base vacía se aplican las 52 versiones. En los siguientes inicios se
+aplican únicamente las nuevas. Flyway registra versiones y checksums; editar
+un archivo ya aplicado puede causar un error de validación. Las modificaciones
+posteriores deben introducirse en una nueva migración.
+
+`spring.jpa.hibernate.ddl-auto=validate` evita que Hibernate cree o cambie
+tablas. Su validación cubre las entidades mapeadas; como aún no hay entidades
+JPA, no sustituye la revisión del esquema SQL completo. La creación de las
+tablas corresponde a Flyway. `spring.flyway.clean-disabled=true` mantiene
+deshabilitada la limpieza de la base mediante Flyway.
+
+**Estado de verificación:** se comprobó la numeración V1–V52, el orden de
+referencias y la compilación Maven, y se verificó que el JAR incluye los 52 SQL.
+La ejecución real en PostgreSQL sigue pendiente de configurar la conexión.
+La FK entre modelos de IA y proveedores también está pendiente por los tipos
+incompatibles descritos en la entrega 4.
+
 ## Organización del proyecto
 
 El proyecto padre Maven agrupa tres módulos, visibles por separado en Java Projects:
@@ -21,6 +62,27 @@ rangel/
         │   └── db/migration/ # V1–V52
         └── test/java/
 ```
+
+| Elemento | Responsabilidad | Estado actual |
+| --- | --- | --- |
+| `pom.xml` raíz | Agrupar módulos, versión de Java y configuración heredada de Spring Boot | Proyecto padre; no es una aplicación ejecutable |
+| `domain` | Modelo y reglas de negocio independientes de infraestructura | Declaración de paquete |
+| `application` | Casos de uso que utilizan el dominio | Declaración de paquete y dependencia de domain |
+| `infrastructure` | Integraciones, configuración y arranque de Spring Boot | Clase principal, propiedades, SQL y prueba de contexto |
+| `.mvn/`, `mvnw`, `mvnw.cmd` | Ejecutar Maven con el wrapper del proyecto | Incluidos en el entregable |
+| `.gitignore` | Excluir compilación, archivos locales y referencias | Conserva fuentes y configuración compartida |
+
+Las dependencias entre módulos siguen esta dirección:
+
+```text
+infrastructure → application → domain
+```
+
+La clase principal está en
+`infrastructure/src/main/java/com/migracion/rangel/RangelApplication.java`.
+El archivo de configuración que se utiliza está en
+`infrastructure/src/main/resources/application.properties`; cualquier pestaña
+del editor que conserve la ruta anterior `src/main/resources` debe actualizarse.
 
 `domain` y `application` contienen por ahora la declaración de sus paquetes;
 su implementación funcional se añadirá cuando corresponda. Las dependencias de
@@ -187,9 +249,44 @@ tipos documentada en la entrega 4.
 
 ## Conexión y ejecución
 
+### Requisitos
+
+- JDK 25, de acuerdo con `<java.version>` del POM raíz; comprobar con `java -version`.
+- PostgreSQL disponible y una base vacía para la primera ejecución.
+- Un usuario con permisos para conectar y crear tablas y restricciones en el esquema destino.
+- Acceso a las dependencias Maven en la primera compilación, o una caché local completa.
+
+La versión de Spring Boot declarada en el POM es 4.1.1. El wrapper permite
+compilar sin instalar Maven por separado. Todos los comandos siguientes se
+ejecutan en PowerShell desde la raíz del proyecto.
+
+### Preparar la conexión
+
 La base PostgreSQL debe existir. Antes de iniciar el proyecto, definir en la
 terminal `DB_URL` (formato `jdbc:postgresql://HOST:PUERTO/BASE`), `DB_USERNAME`
-y `DB_PASSWORD` con los datos de conexión que se proporcionen.
+y `DB_PASSWORD` con los datos de conexión que se proporcionen. Por ejemplo,
+para una base local de desarrollo llamada `mindconnect`:
+
+```powershell
+$env:DB_URL = 'jdbc:postgresql://localhost:5432/mindconnect'
+$env:DB_USERNAME = 'usuario_desarrollo'
+$env:DB_PASSWORD = 'reemplazar_por_la_clave_local'
+```
+
+Estos valores son ejemplos y deben reemplazarse. Las variables pertenecen a
+la sesión actual de la terminal. `application.properties` contiene referencias
+a ellas, sin credenciales guardadas. Un archivo `.env` no se carga automáticamente
+con la configuración actual.
+
+La base puede crearse desde pgAdmin o, con una cuenta autorizada, ejecutando:
+
+```sql
+CREATE DATABASE mindconnect;
+```
+
+Flyway crea las tablas dentro de la base; no crea la base PostgreSQL.
+
+### Compilar y arrancar
 
 Con un JDK 25 disponible, ejecutar desde la raíz:
 
@@ -197,6 +294,21 @@ Con un JDK 25 disponible, ejecutar desde la raíz:
 .\mvnw.cmd clean install -DskipTests
 .\mvnw.cmd -pl infrastructure spring-boot:run
 ```
+
+El primer comando compila todos los módulos e instala sus artefactos en el
+repositorio Maven local. Esto permite que el segundo resuelva las dependencias
+de application y domain al ejecutar infrastructure. `-DskipTests` omite la
+ejecución de pruebas; un BUILD SUCCESS con esta opción no prueba la conexión.
+
+También puede ejecutarse el JAR generado, con las mismas variables definidas:
+
+```powershell
+java -jar .\infrastructure\target\infrastructure-0.0.1-SNAPSHOT.jar
+```
+
+Para detener la ejecución desde la terminal, utilizar `Ctrl+C`.
+
+### Comprobar el resultado
 
 El inicio aplica las migraciones pendientes. Hibernate utiliza `validate` para
 que Flyway gestione el esquema. Para comprobar el historial en PostgreSQL:
@@ -207,8 +319,105 @@ FROM flyway_schema_history
 ORDER BY installed_rank;
 ```
 
+En una primera ejecución completa deben aparecer las versiones 1 a 52 con
+`success = true`. Revisar también las tablas y sus restricciones desde pgAdmin.
+Para ejecutar la prueba de contexto una vez disponible la conexión:
+
+```powershell
+.\mvnw.cmd test
+```
+
+Esta prueba arranca el contexto de Spring Boot y puede aplicar migraciones;
+utilizar una base de desarrollo dedicada. No es una prueba exhaustiva de las
+52 tablas ni de las reglas de negocio.
+
 La ejecución contra PostgreSQL está pendiente de los datos de conexión. Este
 bloque crea estructura, no transfiere registros desde otra base de datos.
 El siguiente paso es configurar la conexión y validar las 52 migraciones en
 PostgreSQL. No modificar SQL
 que ya se haya aplicado; los cambios posteriores requieren una nueva versión.
+
+## Cómo reconstruir el proyecto
+
+### Recuperar la aplicación desde el repositorio
+
+1. Clonar el repositorio o recuperar una copia que contenga los POM, los tres
+   módulos, las migraciones y el wrapper Maven.
+2. Instalar o seleccionar JDK 25 y abrir la raíz en VS Code.
+3. Definir las variables de conexión en una terminal nueva.
+4. Ejecutar `.\mvnw.cmd clean install -DskipTests` y arrancar infrastructure
+   con los comandos de la sección anterior.
+
+Las carpetas `target` se regeneran al compilar. `clean` elimina resultados de
+compilación; no borra tablas ni reinicia el historial de Flyway. Las referencias
+de `revision_adjuntos` están ignoradas y no son necesarias para ejecutar la
+copia del repositorio. Conservar aparte el diagrama y la documentación si se
+necesitan para revisar o reproducir las decisiones del diseño.
+
+### Reconstruir el esquema en una base nueva
+
+1. Crear otra base vacía, por ejemplo `mindconnect_reconstruida`.
+2. Cambiar `DB_URL` a `jdbc:postgresql://localhost:5432/mindconnect_reconstruida`
+   y configurar las credenciales correspondientes.
+3. Arrancar la aplicación. Flyway aplicará V1–V52 porque esa base no tiene historial.
+4. Comprobar `flyway_schema_history` y las tablas generadas.
+
+Este procedimiento reproduce el esquema sin eliminar la base anterior.
+Los datos de una base existente requieren una copia de seguridad y restauración
+o un proceso de transferencia independiente: los SQL actuales no los recuperan.
+No borrar únicamente `flyway_schema_history` para repetir la migración sobre
+tablas existentes; los CREATE TABLE volverían a intentar crear esas tablas.
+
+### Continuar un esquema ya aplicado
+
+Mantener V1–V52 y agregar el siguiente archivo, por ejemplo
+`V53__descripcion_del_cambio.sql`, con los ALTER TABLE o instrucciones
+necesarias. Revisar primero los datos existentes si se introducen restricciones
+o cambios de tipo. Compilar y probar sobre una base de desarrollo antes de
+ejecutar el cambio sobre una base con datos importantes.
+
+## Cómo reproducir el trabajo desde el diagrama
+
+Para volver a implementar el proyecto, seguir este orden:
+
+1. Reunir el diagrama legible y la documentación de requisitos. Los proyectos
+   de ejemplo sirven para orientar la estructura; el esquema se obtiene del diagrama.
+2. Inventariar cada tabla, columna, tipo, longitud y marcas PK, FK, U y N.
+   Registrar inconsistencias antes de escribir SQL. En esta implementación,
+   U significa UNIQUE y N permite NULL; las demás columnas son obligatorias.
+3. Dibujar las dependencias entre tablas y ordenar su creación: catálogos y
+   tablas padre primero, tablas dependientes y de asociación después.
+4. Crear el padre Maven y los módulos domain, application e infrastructure,
+   con las dependencias en la dirección indicada arriba. Configurar el wrapper,
+   Java y las dependencias de Spring Boot, PostgreSQL y Flyway.
+5. Crear la clase principal en infrastructure y configurar el datasource,
+   Flyway y Hibernate en su archivo application.properties.
+6. Escribir una migración por tabla en `infrastructure/src/main/resources/db/migration`.
+   Utilizar `Vnumero__descripcion.sql`, con dos guiones bajos; comenzar por
+   `V1__create_countries_table.sql`. Mantener nombres, tipos y restricciones
+   acordados, sin añadir defaults ni cascadas ausentes del diagrama.
+7. Revisar el inventario de este README y las decisiones particulares de cada
+   bloque: Column1/Column2 omitidas, nombres conservados, fechas obligatorias,
+   marcas temporales interpretadas y la relación pendiente de proveedores de IA.
+8. Verificar versiones consecutivas, referencias a tablas anteriores y
+   compilación. Ejecutar las migraciones en una base vacía y revisar el historial
+   y las restricciones. La compilación por sí sola no verifica el SQL en PostgreSQL.
+9. Guardar fuentes y documentación en Git. Se puede repetir la revisión y el
+   commit por bloques de diez migraciones, terminando con V51 y V52.
+
+## Problemas frecuentes
+
+| Síntoma | Qué revisar |
+| --- | --- |
+| Java no admite la versión de compilación | JDK 25 activo y configuración JAVA_HOME |
+| Faltan DB_URL, DB_USERNAME o DB_PASSWORD | Definir las tres variables en la terminal que ejecuta la aplicación |
+| PostgreSQL rechaza la conexión | Servidor iniciado, host, puerto, nombre de base, usuario y contraseña |
+| Permiso denegado al crear tablas | Permisos del usuario sobre la base y el esquema destino |
+| Maven no encuentra application o domain al arrancar infrastructure | Ejecutar primero `clean install -DskipTests` desde la raíz |
+| Flyway detecta un checksum diferente | Comparar el SQL aplicado con Git; restaurar su contenido original y crear una nueva versión para el cambio |
+| Una tabla ya existe en el primer inicio | Usar una base vacía; una base preexistente necesita un plan específico de adopción, no repetir CREATE TABLE |
+| Java Projects muestra la organización anterior | Abrir la raíz y ejecutar Java: Clean Java Language Server Workspace |
+
+Ante un error de Flyway, revisar el mensaje y el estado de la base antes de
+reintentar. No cambiar checksums o borrar el historial para ocultar una diferencia
+entre los archivos y el esquema instalado.
