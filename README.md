@@ -33,6 +33,34 @@ Las restricciones UNIQUE sobre nombres de profesionales se mantienen porque
 están marcadas en el diagrama, aunque impiden registrar nombres repetidos.
 No se agregan valores por defecto ni reglas de borrado en cascada.
 
+## Entrega 2: V11 a V20
+
+| Versión | Tabla | Referencias |
+| --- | --- | --- |
+| V11 | phone_contacts | contacts |
+| V12 | email_contacts | contacts |
+| V13 | professional_studies | studies, professionals, countries |
+| V14 | patients | document_types, genders, professionals, city_municipalities |
+| V15 | patient_contacts | contacts, patients, relationship_types |
+| V16 | patient_allergies | patients, professionals |
+| V17 | clinical_record_statuses | — |
+| V18 | clinical_records | patients, clinical_record_statuses, professionals |
+| V19 | encounter_types | — |
+| V20 | encounter_modalities | — |
+
+`phone_contacts` conserva la tabla y omite `Column1` y `Column2`; no se
+inventan columnas de auditoría. `email_contacts.email` conserva la marca UNIQUE.
+`professional_studies.country_id` y su FK están incluidos según el diagrama.
+`patient_contacts` representa la relación N:M entre pacientes y contactos.
+Los campos de autoría referencian `professionals.id`.
+
+En `clinical_records`, `creation_date` es TIMESTAMP y `record_number` tiene
+longitud 50. No se añade `active` a `clinical_record_statuses`, porque no aparece
+en la imagen. `birth_date` y `clinical_records.closed_at` son obligatorios al no
+tener marca N; esto exige proporcionar fecha de cierre al crear una historia.
+Se mantiene esa restricción del diagrama, pendiente de una decisión funcional
+si deben admitirse historias abiertas sin fecha de cierre.
+
 ## Conexión y ejecución
 
 La base PostgreSQL debe existir. Antes de iniciar el proyecto, definir en la
@@ -56,5 +84,5 @@ ORDER BY installed_rank;
 
 La ejecución contra PostgreSQL está pendiente de los datos de conexión. Este
 bloque crea estructura, no transfiere registros desde otra base de datos.
-Después del commit de este bloque se continúa con V11–V20. No modificar SQL
+Después del commit de este bloque se continúa con V21–V30. No modificar SQL
 que ya se haya aplicado; los cambios posteriores requieren una nueva versión.
