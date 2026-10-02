@@ -18,7 +18,7 @@ rangel/
         ├── main/java/       # RangelApplication
         ├── main/resources/
         │   ├── application.properties
-        │   └── db/migration/ # V1–V50
+        │   └── db/migration/ # V1–V52
         └── test/java/
 ```
 
@@ -168,6 +168,23 @@ porque no aparece en el diagrama. `closed_by` conserva UUID sin FK, al no tener
 marca FK ni una relación dibujada. Los nombres de message_types y
 escalations_statuses no llevan UNIQUE, porque no tienen marca U.
 
+## Entrega 6: V51 y V52
+
+| Versión | Tabla | Referencias |
+| --- | --- | --- |
+| V51 | chat_escalation_assignments | chat_escalations, professionals |
+| V52 | chat_escalation_status_history | chat_escalations, escalations_statuses |
+
+Las asignaciones vinculan escalaciones y profesionales mediante dos FK,
+permitiendo múltiples asignaciones por escalación y por profesional. El historial
+permite múltiples cambios por escalación y referencia el catálogo de estados.
+Se conservan assigned_at, created_at y changed_at como TIMESTAMP obligatorios,
+sin añadir restricciones UNIQUE ni acciones de borrado que no figuren en el diagrama.
+
+Con esta entrega están creadas las 52 migraciones, de V1 a V52. La relación
+entre modelos de IA y proveedores sigue pendiente por la incompatibilidad de
+tipos documentada en la entrega 4.
+
 ## Conexión y ejecución
 
 La base PostgreSQL debe existir. Antes de iniciar el proyecto, definir en la
@@ -192,5 +209,6 @@ ORDER BY installed_rank;
 
 La ejecución contra PostgreSQL está pendiente de los datos de conexión. Este
 bloque crea estructura, no transfiere registros desde otra base de datos.
-Después del commit de este bloque se continúa con V51–V52. No modificar SQL
+El siguiente paso es configurar la conexión y validar las 52 migraciones en
+PostgreSQL. No modificar SQL
 que ya se haya aplicado; los cambios posteriores requieren una nueva versión.
