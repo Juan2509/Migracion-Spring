@@ -18,7 +18,7 @@ rangel/
         ├── main/java/       # RangelApplication
         ├── main/resources/
         │   ├── application.properties
-        │   └── db/migration/ # V1–V20
+        │   └── db/migration/ # V1–V30
         └── test/java/
 ```
 
@@ -89,6 +89,31 @@ tener marca N; esto exige proporcionar fecha de cierre al crear una historia.
 Se mantiene esa restricción del diagrama, pendiente de una decisión funcional
 si deben admitirse historias abiertas sin fecha de cierre.
 
+## Entrega 3: V21 a V30
+
+| Versión | Tabla | Referencias |
+| --- | --- | --- |
+| V21 | encounter_statuses | — |
+| V22 | encounters | clinical_records, professionals, encounter_types, encounter_modalities, encounter_statuses |
+| V23 | clinical_notes | encounters, professionals |
+| V24 | mental_status_exams | encounters, professionals |
+| V25 | risk_levels | — |
+| V26 | risk_assessments | encounters, risk_levels, professionals |
+| V27 | treatment_statuses | — |
+| V28 | treatment_plans | encounters, professionals, treatment_statuses |
+| V29 | treatment_goal_statuses | — |
+| V30 | treatment_goals | treatment_plans, treatment_goal_statuses |
+
+`clinical_notes.assessment` y `plan` son TEXT, según la imagen. Solo `code`
+lleva UNIQUE en `risk_levels`. Se conserva el nombre `treatment_goal_id`, cuya
+FK apunta al catálogo `treatment_goal_statuses`.
+
+Las relaciones de este bloque son 1:N. Se sigue la interpretación de la marca N:
+las columnas no marcadas son obligatorias, incluidas `encounters.ended_at`,
+`treatment_plans.end_date` y `treatment_goals.completed_at`. Por ello deben
+proporcionarse estas fechas al insertar registros; admitir procesos abiertos
+sin fecha de finalización requeriría acordar un cambio del esquema.
+
 ## Conexión y ejecución
 
 La base PostgreSQL debe existir. Antes de iniciar el proyecto, definir en la
@@ -113,5 +138,5 @@ ORDER BY installed_rank;
 
 La ejecución contra PostgreSQL está pendiente de los datos de conexión. Este
 bloque crea estructura, no transfiere registros desde otra base de datos.
-Después del commit de este bloque se continúa con V21–V30. No modificar SQL
+Después del commit de este bloque se continúa con V31–V40. No modificar SQL
 que ya se haya aplicado; los cambios posteriores requieren una nueva versión.
