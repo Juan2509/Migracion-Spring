@@ -18,7 +18,7 @@ rangel/
         ├── main/java/       # RangelApplication
         ├── main/resources/
         │   ├── application.properties
-        │   └── db/migration/ # V1–V40
+        │   └── db/migration/ # V1–V50
         └── test/java/
 ```
 
@@ -142,6 +142,32 @@ diagrama no especifica un límite. PostgreSQL permite esta declaración.
 queda pendiente de corregir los tipos mediante una decisión sobre el esquema.
 Las tablas de este bloque se crean antes de las tablas de chat que las usan.
 
+## Entrega 5: V41 a V50
+
+| Versión | Tabla | Referencias |
+| --- | --- | --- |
+| V41 | chat_conversations | conversations_statuses, priorities |
+| V42 | chat_participants | chat_conversations, sender_types, patients, professionals |
+| V43 | chat_conversation_ai_settings | chat_conversations, ai_models |
+| V44 | message_types | — |
+| V45 | chat_messages | chat_conversations, message_types, chat_participants |
+| V46 | chat_ai_runs | chat_conversations, chat_messages, ai_models, ai_run_statuses |
+| V47 | chat_ai_run_errors | chat_ai_runs |
+| V48 | chat_ai_run_metrics | chat_ai_runs |
+| V49 | escalations_statuses | — |
+| V50 | chat_escalations | chat_conversations, escalations_statuses |
+
+Se conservan los TIMESTAMP y los JSONB de mensajes, así como DECIMAL(10,6)
+para el coste de las ejecuciones. Las relaciones son 1:N y se crean las
+tablas referenciadas antes de declarar sus FK.
+
+Las marcas N permiten NULL en `last_message_at`, `closed`, `closed_at` y
+`closed_by` de conversaciones, y en `patient_id` y `professional_id` de
+participantes. No se añade una regla de exclusión entre paciente y profesional,
+porque no aparece en el diagrama. `closed_by` conserva UUID sin FK, al no tener
+marca FK ni una relación dibujada. Los nombres de message_types y
+escalations_statuses no llevan UNIQUE, porque no tienen marca U.
+
 ## Conexión y ejecución
 
 La base PostgreSQL debe existir. Antes de iniciar el proyecto, definir en la
@@ -166,5 +192,5 @@ ORDER BY installed_rank;
 
 La ejecución contra PostgreSQL está pendiente de los datos de conexión. Este
 bloque crea estructura, no transfiere registros desde otra base de datos.
-Después del commit de este bloque se continúa con V41–V50. No modificar SQL
+Después del commit de este bloque se continúa con V51–V52. No modificar SQL
 que ya se haya aplicado; los cambios posteriores requieren una nueva versión.
