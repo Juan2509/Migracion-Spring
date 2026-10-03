@@ -28,7 +28,7 @@ phonecontact/emailcontact según V11–V12, professionalstudy según V13 y patie
 según V14, patientcontact según V15, patientallergy según V16 y
 clinicalrecordstatus/clinicalrecord según V17–V18 y los catálogos
 encountertype, encountermodality y encounterstatus según V19–V21, además de
-encounter según V22.
+encounter según V22 y clinicalnote según V23.
 Los demás contextos siguen pendientes.
 Los scripts crean tablas y restricciones, sin cargar datos iniciales
 ni trasladar registros de otra base.
@@ -80,9 +80,9 @@ rangel/
 | Elemento | Responsabilidad | Estado actual |
 | --- | --- | --- |
 | `pom.xml` raíz | Agrupar módulos, versión de Java y configuración heredada de Spring Boot | Proyecto padre; no es una aplicación ejecutable |
-| `domain` | Modelo y reglas de negocio independientes de infraestructura | Base compartida y veintidós contextos con agregados, IDs, eventos y puertos |
+| `domain` | Modelo y reglas de negocio independientes de infraestructura | Base compartida y veintitrés contextos con agregados, IDs, eventos y puertos |
 | `application` | Casos de uso que utilizan el dominio | Base compartida y cinco casos de uso CRUD por contexto implementado |
-| `infrastructure` | Integraciones, configuración y arranque de Spring Boot | Arranque, SQL, API REST y adaptadores JPA de los veintidós contextos |
+| `infrastructure` | Integraciones, configuración y arranque de Spring Boot | Arranque, SQL, API REST y adaptadores JPA de los veintitrés contextos |
 | `.mvn/`, `mvnw`, `mvnw.cmd` | Ejecutar Maven con el wrapper del proyecto | Incluidos en el entregable |
 | `.gitignore` | Excluir compilación, archivos locales y referencias | Conserva fuentes y configuración compartida |
 
@@ -166,8 +166,8 @@ no publica mensajes ni persiste eventos. Cada agregado futuro heredará de
 AggregateRoot y registrará sus eventos al crear o actualizar; restaurarlo desde
 la base no debe generar un nuevo evento de registro.
 
-Los primeros veintidós contextos ya están implementados. El siguiente contexto
-es clinical_notes. Las entregas
+Los primeros veintitrés contextos ya están implementados. El siguiente contexto
+es mental_status_exams. Las entregas
 agrupan 2–3 tablas sencillas; los contextos complejos se revisan individualmente.
 Las migraciones existentes seguirán siendo la fuente de columnas y tipos.
 
@@ -314,12 +314,21 @@ TEXT. CreatedAt y createdBy se mantienen al actualizar, mientras updatedBy es
 obligatorio tanto al registrar como al actualizar. EndedAt sigue siendo obligatorio.
 Consultar [Guía de encuentros](docs/encounter.md). V22 conserva su contenido.
 
+### Contexto clinicalnote
+
+ClinicalNote tiene las tres capas y CRUD REST según V23. Valida encuentro y
+profesional antes de guardar. Sus cinco textos son obligatorios y usan TEXT;
+signedAt, createdAt y updatedAt usan OffsetDateTime (TIMESTAMPTZ). La solicitud
+proporciona signedAt y el dominio gestiona la auditoría, conservando createdAt
+al actualizar. Se admiten notas repetidas y no se añaden reglas de firma.
+Consultar [Guía de notas clínicas](docs/clinicalnote.md). V23 no se modifica.
+
 ### Avance de implementación
 
 | Parte del trabajo | Estado |
 | --- | --- |
 | Scripts de creación del esquema | 52 de 52 creados (100 %) |
-| Contextos en dominio, aplicación e infraestructura | 22 de 52 implementados (42,3 %) |
+| Contextos en dominio, aplicación e infraestructura | 23 de 52 implementados (44,2 %) |
 | Integración HTTP y validación en PostgreSQL | Pendiente de conexión |
 
 El porcentaje comunicado en cada entrega se calcula como contextos implementados
