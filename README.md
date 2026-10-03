@@ -20,7 +20,9 @@ El entregable crea el esquema de MindConnect mediante 52 archivos SQL
 versionados. Actualmente contiene la estructura modular y las migraciones;
 los módulos de negocio incluyen la base compartida y el contexto country con
 casos de uso, entidad JPA y API REST. También está implementado stateregion,
-que referencia a country por su ID. Los demás contextos siguen pendientes.
+que referencia a country por su ID, y citymunicipality, que referencia a
+stateregion por su ID. También están implementados documenttype, gender y
+professionaltype, con sus restricciones de unicidad. Los demás contextos siguen pendientes.
 Los scripts crean tablas y restricciones, sin cargar datos iniciales
 ni trasladar registros de otra base.
 
@@ -37,7 +39,9 @@ posteriores deben introducirse en una nueva migración.
 
 `spring.jpa.hibernate.ddl-auto=validate` evita que Hibernate cree o cambie
 tablas. Su validación cubre las entidades mapeadas; actualmente country es la
-primera, acompañada por stateregion, por lo que no sustituye la revisión del esquema SQL completo. La creación de las
+primera, acompañada por stateregion, citymunicipality y los tres catálogos
+documenttype, gender y professionaltype, por lo que no sustituye
+la revisión del esquema SQL completo. La creación de las
 tablas corresponde a Flyway. `spring.flyway.clean-disabled=true` mantiene
 deshabilitada la limpieza de la base mediante Flyway.
 
@@ -69,9 +73,9 @@ rangel/
 | Elemento | Responsabilidad | Estado actual |
 | --- | --- | --- |
 | `pom.xml` raíz | Agrupar módulos, versión de Java y configuración heredada de Spring Boot | Proyecto padre; no es una aplicación ejecutable |
-| `domain` | Modelo y reglas de negocio independientes de infraestructura | Base compartida, agregados country y stateregion, IDs, eventos y puertos |
+| `domain` | Modelo y reglas de negocio independientes de infraestructura | Base compartida y seis contextos con agregados, IDs, eventos y puertos |
 | `application` | Casos de uso que utilizan el dominio | Base compartida y cinco casos de uso CRUD por contexto implementado |
-| `infrastructure` | Integraciones, configuración y arranque de Spring Boot | Arranque, SQL, API REST y adaptadores JPA de country y stateregion |
+| `infrastructure` | Integraciones, configuración y arranque de Spring Boot | Arranque, SQL, API REST y adaptadores JPA de los seis contextos |
 | `.mvn/`, `mvnw`, `mvnw.cmd` | Ejecutar Maven con el wrapper del proyecto | Incluidos en el entregable |
 | `.gitignore` | Excluir compilación, archivos locales y referencias | Conserva fuentes y configuración compartida |
 
@@ -155,9 +159,10 @@ no publica mensajes ni persiste eventos. Cada agregado futuro heredará de
 AggregateRoot y registrará sus eventos al crear o actualizar; restaurarlo desde
 la base no debe generar un nuevo evento de registro.
 
-Country y stateregion ya están implementados. La siguiente entrega será
-city_municipalities, manteniendo una tabla por commit. Después se agruparán
-2–3 tablas sencillas; los contextos complejos se revisarán individualmente.
+Los primeros seis contextos ya están implementados. El siguiente bloque
+comprende relationship_types y studies; después se implementará professionals
+como contexto individual por sus referencias y restricciones. Las entregas
+agrupan 2–3 tablas sencillas; los contextos complejos se revisan individualmente.
 Las migraciones existentes seguirán siendo la fuente de columnas y tipos.
 
 ### Contexto country: primera tabla implementada
@@ -177,6 +182,29 @@ integridad referencial en PostgreSQL.
 
 Consultar [Guía de state_regions](docs/stateregion.md) para los campos, rutas,
 ejemplos y pruebas. La migración V2 conserva su contenido original.
+
+### Contexto citymunicipality: ciudades y municipios
+
+City_municipalities tiene las tres capas y sus cinco operaciones CRUD. La
+región se representa por StateRegionId en el dominio y UUID en JPA.
+Register y Update consultan StateRegionRepository para comprobar que exista.
+Se conserva la columna code_citi y la diferencia temporal de V3: created_at
+es TIMESTAMPTZ (OffsetDateTime) y updated_at es TIMESTAMP (LocalDateTime).
+
+Consultar [Guía de city_municipalities](docs/citymunicipality.md) para las rutas,
+campos, pruebas y ejemplos. La migración V3 conserva su contenido original.
+
+### Catálogos documenttype, gender y professionaltype
+
+Los contextos correspondientes a V4–V6 incluyen dominio, cinco casos de uso
+CRUD, REST y persistencia JPA. Respetan las columnas y la unicidad del SQL:
+code en document_types, description en genders y name en professional_types.
+La actualización permite conservar el valor único del propio registro, pero
+rechaza el de otro. Los conflictos se devuelven como 409 y las restricciones
+SQL siguen protegiendo la integridad ante operaciones concurrentes.
+
+Consultar [Guía de catálogos V4–V6](docs/catalogos-v4-v6.md) para los campos,
+endpoints y ejemplos. Las migraciones existentes no se han modificado.
 
 ## Entrega 1: V1 a V10
 
