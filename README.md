@@ -19,7 +19,8 @@ referencias de organización.
 El entregable crea el esquema de MindConnect mediante 52 archivos SQL
 versionados. Actualmente contiene la estructura modular y las migraciones;
 los módulos de negocio incluyen la base compartida y el contexto country con
-casos de uso, entidad JPA y API REST. Los demás contextos siguen pendientes.
+casos de uso, entidad JPA y API REST. También está implementado stateregion,
+que referencia a country por su ID. Los demás contextos siguen pendientes.
 Los scripts crean tablas y restricciones, sin cargar datos iniciales
 ni trasladar registros de otra base.
 
@@ -36,7 +37,7 @@ posteriores deben introducirse en una nueva migración.
 
 `spring.jpa.hibernate.ddl-auto=validate` evita que Hibernate cree o cambie
 tablas. Su validación cubre las entidades mapeadas; actualmente country es la
-primera, por lo que no sustituye la revisión del esquema SQL completo. La creación de las
+primera, acompañada por stateregion, por lo que no sustituye la revisión del esquema SQL completo. La creación de las
 tablas corresponde a Flyway. `spring.flyway.clean-disabled=true` mantiene
 deshabilitada la limpieza de la base mediante Flyway.
 
@@ -68,9 +69,9 @@ rangel/
 | Elemento | Responsabilidad | Estado actual |
 | --- | --- | --- |
 | `pom.xml` raíz | Agrupar módulos, versión de Java y configuración heredada de Spring Boot | Proyecto padre; no es una aplicación ejecutable |
-| `domain` | Modelo y reglas de negocio independientes de infraestructura | Base compartida y agregado country, ID, eventos y puerto |
-| `application` | Casos de uso que utilizan el dominio | Base compartida y cinco casos de uso CRUD de country |
-| `infrastructure` | Integraciones, configuración y arranque de Spring Boot | Arranque, SQL, API REST y adaptador JPA de country |
+| `domain` | Modelo y reglas de negocio independientes de infraestructura | Base compartida, agregados country y stateregion, IDs, eventos y puertos |
+| `application` | Casos de uso que utilizan el dominio | Base compartida y cinco casos de uso CRUD por contexto implementado |
+| `infrastructure` | Integraciones, configuración y arranque de Spring Boot | Arranque, SQL, API REST y adaptadores JPA de country y stateregion |
 | `.mvn/`, `mvnw`, `mvnw.cmd` | Ejecutar Maven con el wrapper del proyecto | Incluidos en el entregable |
 | `.gitignore` | Excluir compilación, archivos locales y referencias | Conserva fuentes y configuración compartida |
 
@@ -154,8 +155,8 @@ no publica mensajes ni persiste eventos. Cada agregado futuro heredará de
 AggregateRoot y registrará sus eventos al crear o actualizar; restaurarlo desde
 la base no debe generar un nuevo evento de registro.
 
-Country ya está implementado. Las entregas siguientes serán state_regions y
-city_municipalities, inicialmente una tabla por commit. Después se agruparán
+Country y stateregion ya están implementados. La siguiente entrega será
+city_municipalities, manteniendo una tabla por commit. Después se agruparán
 2–3 tablas sencillas; los contextos complejos se revisarán individualmente.
 Las migraciones existentes seguirán siendo la fuente de columnas y tipos.
 
@@ -165,6 +166,17 @@ La implementación de countries está documentada en [Guía de country](docs/cou
 Incluye las tres capas, los cinco endpoints CRUD y pruebas de dominio,
 casos de uso y conversión de persistencia. Las columnas se obtienen de V1;
 los archivos de migración no se han modificado.
+
+### Contexto stateregion: primera tabla con referencia a otro agregado
+
+State_regions tiene las tres capas y sus cinco operaciones CRUD. Su país se
+representa mediante CountryId en el dominio y UUID en JPA, sin ManyToOne.
+Al registrar o actualizar, los casos de uso consultan el puerto CountryRepository
+para comprobar la existencia del país. La FK de V2 sigue garantizando la
+integridad referencial en PostgreSQL.
+
+Consultar [Guía de state_regions](docs/stateregion.md) para los campos, rutas,
+ejemplos y pruebas. La migración V2 conserva su contenido original.
 
 ## Entrega 1: V1 a V10
 
