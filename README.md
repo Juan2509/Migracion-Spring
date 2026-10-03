@@ -27,7 +27,8 @@ study, adaptados a V7–V8, professional según V9, contact según V10 y
 phonecontact/emailcontact según V11–V12, professionalstudy según V13 y patient
 según V14, patientcontact según V15, patientallergy según V16 y
 clinicalrecordstatus/clinicalrecord según V17–V18 y los catálogos
-encountertype, encountermodality y encounterstatus según V19–V21.
+encountertype, encountermodality y encounterstatus según V19–V21, además de
+encounter según V22.
 Los demás contextos siguen pendientes.
 Los scripts crean tablas y restricciones, sin cargar datos iniciales
 ni trasladar registros de otra base.
@@ -79,9 +80,9 @@ rangel/
 | Elemento | Responsabilidad | Estado actual |
 | --- | --- | --- |
 | `pom.xml` raíz | Agrupar módulos, versión de Java y configuración heredada de Spring Boot | Proyecto padre; no es una aplicación ejecutable |
-| `domain` | Modelo y reglas de negocio independientes de infraestructura | Base compartida y veintiún contextos con agregados, IDs, eventos y puertos |
+| `domain` | Modelo y reglas de negocio independientes de infraestructura | Base compartida y veintidós contextos con agregados, IDs, eventos y puertos |
 | `application` | Casos de uso que utilizan el dominio | Base compartida y cinco casos de uso CRUD por contexto implementado |
-| `infrastructure` | Integraciones, configuración y arranque de Spring Boot | Arranque, SQL, API REST y adaptadores JPA de los veintiún contextos |
+| `infrastructure` | Integraciones, configuración y arranque de Spring Boot | Arranque, SQL, API REST y adaptadores JPA de los veintidós contextos |
 | `.mvn/`, `mvnw`, `mvnw.cmd` | Ejecutar Maven con el wrapper del proyecto | Incluidos en el entregable |
 | `.gitignore` | Excluir compilación, archivos locales y referencias | Conserva fuentes y configuración compartida |
 
@@ -165,8 +166,8 @@ no publica mensajes ni persiste eventos. Cada agregado futuro heredará de
 AggregateRoot y registrará sus eventos al crear o actualizar; restaurarlo desde
 la base no debe generar un nuevo evento de registro.
 
-Los primeros veintiún contextos ya están implementados. El siguiente contexto
-es encounters. Las entregas
+Los primeros veintidós contextos ya están implementados. El siguiente contexto
+es clinical_notes. Las entregas
 agrupan 2–3 tablas sencillas; los contextos complejos se revisan individualmente.
 Las migraciones existentes seguirán siendo la fuente de columnas y tipos.
 
@@ -304,12 +305,21 @@ unicidad. No se cargan valores iniciales ni se añaden reglas de transición.
 Consultar [Guía de catálogos de encuentros](docs/catalogos-encuentros.md).
 V19–V21 conservan su contenido original.
 
+### Contexto encounter
+
+Encounter incluye las tres capas y CRUD REST según V22. Valida historia clínica,
+profesional, tipo, modalidad, estado, creador y actualizador. Todas sus fechas
+usan OffsetDateTime (TIMESTAMPTZ); reasonForVisit y currentCondition conservan
+TEXT. CreatedAt y createdBy se mantienen al actualizar, mientras updatedBy es
+obligatorio tanto al registrar como al actualizar. EndedAt sigue siendo obligatorio.
+Consultar [Guía de encuentros](docs/encounter.md). V22 conserva su contenido.
+
 ### Avance de implementación
 
 | Parte del trabajo | Estado |
 | --- | --- |
 | Scripts de creación del esquema | 52 de 52 creados (100 %) |
-| Contextos en dominio, aplicación e infraestructura | 21 de 52 implementados (40,4 %) |
+| Contextos en dominio, aplicación e infraestructura | 22 de 52 implementados (42,3 %) |
 | Integración HTTP y validación en PostgreSQL | Pendiente de conexión |
 
 El porcentaje comunicado en cada entrega se calcula como contextos implementados
