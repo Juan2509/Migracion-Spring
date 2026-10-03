@@ -22,7 +22,8 @@ los módulos de negocio incluyen la base compartida y el contexto country con
 casos de uso, entidad JPA y API REST. También está implementado stateregion,
 que referencia a country por su ID, y citymunicipality, que referencia a
 stateregion por su ID. También están implementados documenttype, gender y
-professionaltype, con sus restricciones de unicidad. Los demás contextos siguen pendientes.
+professionaltype, con sus restricciones de unicidad, y relationshiptype y
+study, adaptados a V7–V8. Los demás contextos siguen pendientes.
 Los scripts crean tablas y restricciones, sin cargar datos iniciales
 ni trasladar registros de otra base.
 
@@ -73,9 +74,9 @@ rangel/
 | Elemento | Responsabilidad | Estado actual |
 | --- | --- | --- |
 | `pom.xml` raíz | Agrupar módulos, versión de Java y configuración heredada de Spring Boot | Proyecto padre; no es una aplicación ejecutable |
-| `domain` | Modelo y reglas de negocio independientes de infraestructura | Base compartida y seis contextos con agregados, IDs, eventos y puertos |
+| `domain` | Modelo y reglas de negocio independientes de infraestructura | Base compartida y ocho contextos con agregados, IDs, eventos y puertos |
 | `application` | Casos de uso que utilizan el dominio | Base compartida y cinco casos de uso CRUD por contexto implementado |
-| `infrastructure` | Integraciones, configuración y arranque de Spring Boot | Arranque, SQL, API REST y adaptadores JPA de los seis contextos |
+| `infrastructure` | Integraciones, configuración y arranque de Spring Boot | Arranque, SQL, API REST y adaptadores JPA de los ocho contextos |
 | `.mvn/`, `mvnw`, `mvnw.cmd` | Ejecutar Maven con el wrapper del proyecto | Incluidos en el entregable |
 | `.gitignore` | Excluir compilación, archivos locales y referencias | Conserva fuentes y configuración compartida |
 
@@ -159,9 +160,8 @@ no publica mensajes ni persiste eventos. Cada agregado futuro heredará de
 AggregateRoot y registrará sus eventos al crear o actualizar; restaurarlo desde
 la base no debe generar un nuevo evento de registro.
 
-Los primeros seis contextos ya están implementados. El siguiente bloque
-comprende relationship_types y studies; después se implementará professionals
-como contexto individual por sus referencias y restricciones. Las entregas
+Los primeros ocho contextos ya están implementados. El siguiente contexto
+será professionals, como entrega individual por sus referencias y restricciones. Las entregas
 agrupan 2–3 tablas sencillas; los contextos complejos se revisan individualmente.
 Las migraciones existentes seguirán siendo la fuente de columnas y tipos.
 
@@ -205,6 +205,17 @@ SQL siguen protegiendo la integridad ante operaciones concurrentes.
 
 Consultar [Guía de catálogos V4–V6](docs/catalogos-v4-v6.md) para los campos,
 endpoints y ejemplos. Las migraciones existentes no se han modificado.
+
+### Contextos relationshiptype y study
+
+Relationship_types y studies incluyen las tres capas y sus cinco operaciones
+CRUD. RelationshipType solo contiene id y description: no se añaden fechas
+de auditoría ausentes de V7, aunque sus eventos sí tienen occurredOn.
+Description es único. Study conserva las fechas de V8 y admite nombres
+repetidos, porque name no lleva UNIQUE.
+
+Consultar [Guía de relaciones y estudios](docs/relaciones-estudios.md) para los
+campos, rutas, pruebas y ejemplos. V7 y V8 mantienen su contenido original.
 
 ## Entrega 1: V1 a V10
 
