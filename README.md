@@ -23,7 +23,8 @@ casos de uso, entidad JPA y API REST. También está implementado stateregion,
 que referencia a country por su ID, y citymunicipality, que referencia a
 stateregion por su ID. También están implementados documenttype, gender y
 professionaltype, con sus restricciones de unicidad, y relationshiptype y
-study, adaptados a V7–V8, y professional según V9. Los demás contextos siguen pendientes.
+study, adaptados a V7–V8, professional según V9 y contact según V10.
+Los demás contextos siguen pendientes.
 Los scripts crean tablas y restricciones, sin cargar datos iniciales
 ni trasladar registros de otra base.
 
@@ -74,9 +75,9 @@ rangel/
 | Elemento | Responsabilidad | Estado actual |
 | --- | --- | --- |
 | `pom.xml` raíz | Agrupar módulos, versión de Java y configuración heredada de Spring Boot | Proyecto padre; no es una aplicación ejecutable |
-| `domain` | Modelo y reglas de negocio independientes de infraestructura | Base compartida y nueve contextos con agregados, IDs, eventos y puertos |
+| `domain` | Modelo y reglas de negocio independientes de infraestructura | Base compartida y diez contextos con agregados, IDs, eventos y puertos |
 | `application` | Casos de uso que utilizan el dominio | Base compartida y cinco casos de uso CRUD por contexto implementado |
-| `infrastructure` | Integraciones, configuración y arranque de Spring Boot | Arranque, SQL, API REST y adaptadores JPA de los nueve contextos |
+| `infrastructure` | Integraciones, configuración y arranque de Spring Boot | Arranque, SQL, API REST y adaptadores JPA de los diez contextos |
 | `.mvn/`, `mvnw`, `mvnw.cmd` | Ejecutar Maven con el wrapper del proyecto | Incluidos en el entregable |
 | `.gitignore` | Excluir compilación, archivos locales y referencias | Conserva fuentes y configuración compartida |
 
@@ -160,8 +161,8 @@ no publica mensajes ni persiste eventos. Cada agregado futuro heredará de
 AggregateRoot y registrará sus eventos al crear o actualizar; restaurarlo desde
 la base no debe generar un nuevo evento de registro.
 
-Los primeros nueve contextos ya están implementados. El siguiente contexto
-será contacts, seguido de phone_contacts y email_contacts. Las entregas
+Los primeros diez contextos ya están implementados. El siguiente bloque
+comprende phone_contacts y email_contacts. Las entregas
 agrupan 2–3 tablas sencillas; los contextos complejos se revisan individualmente.
 Las migraciones existentes seguirán siendo la fuente de columnas y tipos.
 
@@ -228,12 +229,22 @@ está declarada. Ambas fechas usan OffsetDateTime para TIMESTAMPTZ.
 Consultar [Guía de professionals](docs/professional.md). La migración V9
 conserva su contenido original.
 
+### Contexto contact
+
+Contacts tiene las tres capas y su CRUD según V10. Referencia a una ciudad y
+a los profesionales que crean y actualizan el registro mediante IDs, sin
+asociaciones JPA entre agregados. El creador y createdAt se conservan al
+actualizar; updatedBy admite null. Notes utiliza TEXT y las fechas TIMESTAMPTZ
+se representan mediante OffsetDateTime. El correo admite valores repetidos.
+
+Consultar [Guía de contacts](docs/contact.md). V10 no se ha modificado.
+
 ### Avance de implementación
 
 | Parte del trabajo | Estado |
 | --- | --- |
 | Scripts de creación del esquema | 52 de 52 creados (100 %) |
-| Contextos en dominio, aplicación e infraestructura | 9 de 52 implementados (17,3 %) |
+| Contextos en dominio, aplicación e infraestructura | 10 de 52 implementados (19,2 %) |
 | Integración HTTP y validación en PostgreSQL | Pendiente de conexión |
 
 El porcentaje comunicado en cada entrega se calcula como contextos implementados
