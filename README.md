@@ -24,7 +24,8 @@ que referencia a country por su ID, y citymunicipality, que referencia a
 stateregion por su ID. También están implementados documenttype, gender y
 professionaltype, con sus restricciones de unicidad, y relationshiptype y
 study, adaptados a V7–V8, professional según V9, contact según V10 y
-phonecontact/emailcontact según V11–V12.
+phonecontact/emailcontact según V11–V12, professionalstudy según V13 y patient
+según V14.
 Los demás contextos siguen pendientes.
 Los scripts crean tablas y restricciones, sin cargar datos iniciales
 ni trasladar registros de otra base.
@@ -76,9 +77,9 @@ rangel/
 | Elemento | Responsabilidad | Estado actual |
 | --- | --- | --- |
 | `pom.xml` raíz | Agrupar módulos, versión de Java y configuración heredada de Spring Boot | Proyecto padre; no es una aplicación ejecutable |
-| `domain` | Modelo y reglas de negocio independientes de infraestructura | Base compartida y doce contextos con agregados, IDs, eventos y puertos |
+| `domain` | Modelo y reglas de negocio independientes de infraestructura | Base compartida y catorce contextos con agregados, IDs, eventos y puertos |
 | `application` | Casos de uso que utilizan el dominio | Base compartida y cinco casos de uso CRUD por contexto implementado |
-| `infrastructure` | Integraciones, configuración y arranque de Spring Boot | Arranque, SQL, API REST y adaptadores JPA de los doce contextos |
+| `infrastructure` | Integraciones, configuración y arranque de Spring Boot | Arranque, SQL, API REST y adaptadores JPA de los catorce contextos |
 | `.mvn/`, `mvnw`, `mvnw.cmd` | Ejecutar Maven con el wrapper del proyecto | Incluidos en el entregable |
 | `.gitignore` | Excluir compilación, archivos locales y referencias | Conserva fuentes y configuración compartida |
 
@@ -162,8 +163,8 @@ no publica mensajes ni persiste eventos. Cada agregado futuro heredará de
 AggregateRoot y registrará sus eventos al crear o actualizar; restaurarlo desde
 la base no debe generar un nuevo evento de registro.
 
-Los primeros doce contextos ya están implementados. La siguiente entrega
-corresponde a professional_studies y después a patients. Las entregas
+Los primeros catorce contextos ya están implementados. La siguiente entrega
+corresponde a patient_contacts y patient_allergies. Las entregas
 agrupan 2–3 tablas sencillas; los contextos complejos se revisan individualmente.
 Las migraciones existentes seguirán siendo la fuente de columnas y tipos.
 
@@ -251,12 +252,30 @@ No se añaden Column1 ni Column2 ni asociaciones JPA entre agregados.
 Consultar [Guía de teléfonos y correos](docs/telefonos-correos.md). V11 y V12
 mantienen su contenido original.
 
+### Contexto professionalstudy
+
+ProfessionalStudy incluye las tres capas y CRUD en `/api/professional-studies`.
+Comprueba que existan el estudio, el profesional y el país antes de guardar.
+ResolutionNumber admite null; no se impone unicidad a las asociaciones.
+Las fechas TIMESTAMP se representan mediante LocalDateTime. V13 se conserva.
+Consultar [Guía de estudios profesionales](docs/professionalstudy.md).
+
+### Contexto patient
+
+Patient incluye las tres capas y CRUD en `/api/patients`, según V14.
+Comprueba las referencias a document_types, genders (sexo e identidad), ciudad
+y profesionales de autoría. Los segundos nombres y apellidos, createdBy y
+updatedBy admiten null. Solo email es único; al actualizar se excluye el propio
+ID de esa comprobación. CreatedBy y createdAt se conservan.
+BirthDate usa LocalDate y las fechas TIMESTAMP usan LocalDateTime.
+Consultar [Guía de pacientes](docs/patient.md). V14 mantiene su contenido.
+
 ### Avance de implementación
 
 | Parte del trabajo | Estado |
 | --- | --- |
 | Scripts de creación del esquema | 52 de 52 creados (100 %) |
-| Contextos en dominio, aplicación e infraestructura | 12 de 52 implementados (23,1 %) |
+| Contextos en dominio, aplicación e infraestructura | 14 de 52 implementados (26,9 %) |
 | Integración HTTP y validación en PostgreSQL | Pendiente de conexión |
 
 El porcentaje comunicado en cada entrega se calcula como contextos implementados

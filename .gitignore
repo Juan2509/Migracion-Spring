@@ -24,7 +24,10 @@
 # Compilacion, paquetes generados y caches.
 target/
 build/
-out/
+/**/out/
+# Los adaptadores de salida forman parte del codigo fuente.
+!/**/src/main/java/**/adapters/out/
+!/**/src/main/java/**/adapters/out/**
 dist/
 .gradle/
 *.class
