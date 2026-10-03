@@ -18,7 +18,7 @@ referencias de organización.
 
 El entregable crea el esquema de MindConnect mediante 52 archivos SQL
 versionados. Actualmente contiene la estructura modular y las migraciones;
-los módulos de negocio todavía no implementan casos de uso, entidades JPA
+los módulos de negocio incluyen la base compartida, pero todavía no implementan casos de uso, entidades JPA
 ni una API. Los scripts crean tablas y restricciones, sin cargar datos iniciales
 ni trasladar registros de otra base.
 
@@ -47,7 +47,8 @@ incompatibles descritos en la entrega 4.
 
 ## Organización del proyecto
 
-El proyecto padre Maven agrupa tres módulos, visibles por separado en Java Projects:
+El proyecto padre Maven agrupa tres módulos. Java Projects permite trabajar
+con sus fuentes y recursos una vez importados los POM:
 
 ```text
 rangel/
@@ -66,8 +67,8 @@ rangel/
 | Elemento | Responsabilidad | Estado actual |
 | --- | --- | --- |
 | `pom.xml` raíz | Agrupar módulos, versión de Java y configuración heredada de Spring Boot | Proyecto padre; no es una aplicación ejecutable |
-| `domain` | Modelo y reglas de negocio independientes de infraestructura | Declaración de paquete |
-| `application` | Casos de uso que utilizan el dominio | Declaración de paquete y dependencia de domain |
+| `domain` | Modelo y reglas de negocio independientes de infraestructura | DomainEvent y AggregateRoot compartidos |
+| `application` | Casos de uso que utilizan el dominio | ApplicationException compartida y dependencia de domain |
 | `infrastructure` | Integraciones, configuración y arranque de Spring Boot | Clase principal, propiedades, SQL y prueba de contexto |
 | `.mvn/`, `mvnw`, `mvnw.cmd` | Ejecutar Maven con el wrapper del proyecto | Incluidos en el entregable |
 | `.gitignore` | Excluir compilación, archivos locales y referencias | Conserva fuentes y configuración compartida |
@@ -84,15 +85,78 @@ El archivo de configuración que se utiliza está en
 `infrastructure/src/main/resources/application.properties`; cualquier pestaña
 del editor que conserve la ruta anterior `src/main/resources` debe actualizarse.
 
-`domain` y `application` contienen por ahora la declaración de sus paquetes;
-su implementación funcional se añadirá cuando corresponda. Las dependencias de
+`domain` y `application` contienen la base compartida para implementar los contextos;
+los casos de uso de cada tabla se añadirán en las siguientes entregas. Las dependencias de
 Spring, JPA y Flyway quedan en `infrastructure`. Las migraciones conservan
 sus nombres y contenido; su ubicación en el classpath continúa siendo
 `db/migration`.
 
-En VS Code, abrir la raíz `rangel` y actualizar Java Projects. Si sigue mostrando
-la estructura anterior, ejecutar **Java: Clean Java Language Server Workspace**
-desde la paleta de comandos y permitir el reinicio.
+### Trabajar desde Java Projects en VS Code
+
+La documentación de referencia recomienda esta vista y la presentación
+jerárquica. Los ejemplos modulares separan domain, application e infrastructure;
+el ejemplo del compañero coloca sus SQL en `src/main/resources/db/migration`.
+En este proyecto esa misma ruta pertenece al módulo infrastructure.
+
+Para abrir los SQL desde Java Projects, desplegar:
+
+```text
+Java Projects
+└── rangel / infrastructure (según la presentación del editor)
+    └── infrastructure / src/main/resources
+        └── db
+            └── migration
+                ├── V1__create_countries_table.sql
+                ├── ...
+                └── V52__create_chat_escalation_status_history_table.sql
+```
+
+Si la vista muestra el árbol de carpetas bajo rangel, seguir
+`infrastructure → src → main → resources → db → migration`.
+La flecha de migration debe estar desplegada para ver los 52 archivos.
+Para crear una nueva migración, utilizar la acción de nuevo archivo en esa
+carpeta; para crear clases, utilizar los paquetes de `src/main/java` del módulo
+correspondiente. Los SQL son recursos de infrastructure y no clases Java.
+
+La configuración compartida `.vscode/settings.json` activa la presentación
+jerárquica, el servidor Java en modo Standard y la importación de Maven con
+actualización automática de la configuración de compilación. Este archivo
+se incluye en Git para recuperar la misma configuración al clonar.
+
+Si solo aparece rangel y los módulos no se reconocen como proyectos Maven:
+
+1. Abrir la raíz que contiene el POM padre y los tres módulos.
+2. Ejecutar **Java: Clean Java Language Server Workspace** desde la paleta
+   (`Ctrl+Shift+P`) y permitir el reinicio.
+3. Esperar a que finalice la importación Java/Maven y actualizar Java Projects.
+4. Desplegar los recursos de infrastructure y la carpeta migration.
+
+`JRE System Library` representa el JDK y `Maven Dependencies` las bibliotecas.
+Las carpetas `target` contienen resultados generados al compilar; las fuentes
+que se editan están en `src`. La vista puede agrupar nodos de distintas formas,
+pero las rutas Maven de los archivos siguen siendo las indicadas arriba.
+
+### Base compartida de DDD y arquitectura hexagonal
+
+Esta primera entrega de implementación conserva Java 25 y el paquete base
+`com.migracion.rangel`. Los archivos se encuentran en los paquetes common de
+domain y application, accesibles desde Java Projects:
+
+| Clase | Ubicación dentro del módulo | Función |
+| --- | --- | --- |
+| DomainEvent | domain: common/event | Contrato de eventos con occurredOn() |
+| AggregateRoot | domain: common/model | Registrar eventos, consultar una copia inmutable y limpiar la lista |
+| ApplicationException | application: common/exception | Base de excepciones con mensaje y causa opcional |
+
+Estas clases usan únicamente Java. El registro de eventos es en memoria:
+no publica mensajes ni persiste eventos. Cada agregado futuro heredará de
+AggregateRoot y registrará sus eventos al crear o actualizar; restaurarlo desde
+la base no debe generar un nuevo evento de registro.
+
+Las entregas siguientes serán countries completa, state_regions y
+city_municipalities, inicialmente una tabla por commit. Después se agruparán
+2–3 tablas sencillas; los contextos complejos se revisarán individualmente.
+Las migraciones existentes seguirán siendo la fuente de columnas y tipos.
 
 ## Entrega 1: V1 a V10
 

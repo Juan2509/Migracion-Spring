@@ -12,6 +12,7 @@
 !/infrastructure/
 !/README.md
 !/docs/
+!/.vscode/
 
 # Material de consulta y archivos descargados.
 /revision_adjuntos/
@@ -50,7 +51,9 @@ application-local.yaml
 *.jks
 
 # Configuracion personal de editores.
-.vscode/
+# Compartir solo la configuracion necesaria para Java Projects.
+/.vscode/*
+!/.vscode/settings.json
 .idea/
 *.iws
 *.iml
