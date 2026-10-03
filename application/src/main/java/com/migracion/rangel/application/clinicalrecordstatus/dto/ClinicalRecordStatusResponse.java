@@ -1,0 +1,10 @@
+package com.migracion.rangel.application.clinicalrecordstatus.dto;
+import java.util.UUID;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import com.migracion.rangel.domain.clinicalrecordstatus.model.aggregate.ClinicalRecordStatus;
+public record ClinicalRecordStatusResponse(UUID id, String code, String name, LocalDateTime createdAt, LocalDateTime updatedAt) {
+    public static ClinicalRecordStatusResponse from(ClinicalRecordStatus aggregate) {
+        return new ClinicalRecordStatusResponse(aggregate.id().value(), aggregate.code(), aggregate.name(), aggregate.createdAt(), aggregate.updatedAt());
+    }
+}

@@ -25,7 +25,9 @@ stateregion por su ID. También están implementados documenttype, gender y
 professionaltype, con sus restricciones de unicidad, y relationshiptype y
 study, adaptados a V7–V8, professional según V9, contact según V10 y
 phonecontact/emailcontact según V11–V12, professionalstudy según V13 y patient
-según V14, patientcontact según V15 y patientallergy según V16.
+según V14, patientcontact según V15, patientallergy según V16 y
+clinicalrecordstatus/clinicalrecord según V17–V18 y los catálogos
+encountertype, encountermodality y encounterstatus según V19–V21.
 Los demás contextos siguen pendientes.
 Los scripts crean tablas y restricciones, sin cargar datos iniciales
 ni trasladar registros de otra base.
@@ -77,9 +79,9 @@ rangel/
 | Elemento | Responsabilidad | Estado actual |
 | --- | --- | --- |
 | `pom.xml` raíz | Agrupar módulos, versión de Java y configuración heredada de Spring Boot | Proyecto padre; no es una aplicación ejecutable |
-| `domain` | Modelo y reglas de negocio independientes de infraestructura | Base compartida y dieciséis contextos con agregados, IDs, eventos y puertos |
+| `domain` | Modelo y reglas de negocio independientes de infraestructura | Base compartida y veintiún contextos con agregados, IDs, eventos y puertos |
 | `application` | Casos de uso que utilizan el dominio | Base compartida y cinco casos de uso CRUD por contexto implementado |
-| `infrastructure` | Integraciones, configuración y arranque de Spring Boot | Arranque, SQL, API REST y adaptadores JPA de los dieciséis contextos |
+| `infrastructure` | Integraciones, configuración y arranque de Spring Boot | Arranque, SQL, API REST y adaptadores JPA de los veintiún contextos |
 | `.mvn/`, `mvnw`, `mvnw.cmd` | Ejecutar Maven con el wrapper del proyecto | Incluidos en el entregable |
 | `.gitignore` | Excluir compilación, archivos locales y referencias | Conserva fuentes y configuración compartida |
 
@@ -163,8 +165,8 @@ no publica mensajes ni persiste eventos. Cada agregado futuro heredará de
 AggregateRoot y registrará sus eventos al crear o actualizar; restaurarlo desde
 la base no debe generar un nuevo evento de registro.
 
-Los primeros dieciséis contextos ya están implementados. Los siguientes contextos
-son clinical_record_statuses y clinical_records. Las entregas
+Los primeros veintiún contextos ya están implementados. El siguiente contexto
+es encounters. Las entregas
 agrupan 2–3 tablas sencillas; los contextos complejos se revisan individualmente.
 Las migraciones existentes seguirán siendo la fuente de columnas y tipos.
 
@@ -281,12 +283,33 @@ catálogos de severidad. Todas las referencias se validan antes de guardar.
 Consultar [Guía de contactos y alergias de pacientes](docs/contactos-alergias-pacientes.md).
 V15 y V16 conservan su contenido.
 
+### Contextos clinicalrecordstatus y clinicalrecord
+
+Ambos incluyen las tres capas y CRUD REST según V17–V18. El catálogo de estados
+exige code y name únicos y conserva su auditoría TIMESTAMP. La historia clínica
+valida paciente, estado y creador; mantiene createdAt y createdBy al actualizar.
+CreationDate usa LocalDateTime; openedAt, closedAt y createdAt usan OffsetDateTime.
+ClosedAt sigue siendo obligatorio. No se añade updatedAt ni unicidad al número
+de historia, porque V18 no los declara.
+Consultar [Guía de historias clínicas](docs/historias-clinicas.md).
+V17 y V18 conservan su contenido.
+
+### Catálogos de encuentros: V19–V21
+
+EncounterType, EncounterModality y EncounterStatus tienen las tres capas y CRUD
+REST independiente. Los tres validan código (20 caracteres) y nombre (50), únicos
+por separado, además de active obligatorio y auditoría TIMESTAMP. Se conserva
+createdAt al actualizar y se excluye el propio ID de las comprobaciones de
+unicidad. No se cargan valores iniciales ni se añaden reglas de transición.
+Consultar [Guía de catálogos de encuentros](docs/catalogos-encuentros.md).
+V19–V21 conservan su contenido original.
+
 ### Avance de implementación
 
 | Parte del trabajo | Estado |
 | --- | --- |
 | Scripts de creación del esquema | 52 de 52 creados (100 %) |
-| Contextos en dominio, aplicación e infraestructura | 16 de 52 implementados (30,8 %) |
+| Contextos en dominio, aplicación e infraestructura | 21 de 52 implementados (40,4 %) |
 | Integración HTTP y validación en PostgreSQL | Pendiente de conexión |
 
 El porcentaje comunicado en cada entrega se calcula como contextos implementados
