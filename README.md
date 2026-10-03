@@ -18,8 +18,9 @@ referencias de organización.
 
 El entregable crea el esquema de MindConnect mediante 52 archivos SQL
 versionados. Actualmente contiene la estructura modular y las migraciones;
-los módulos de negocio incluyen la base compartida, pero todavía no implementan casos de uso, entidades JPA
-ni una API. Los scripts crean tablas y restricciones, sin cargar datos iniciales
+los módulos de negocio incluyen la base compartida y el contexto country con
+casos de uso, entidad JPA y API REST. Los demás contextos siguen pendientes.
+Los scripts crean tablas y restricciones, sin cargar datos iniciales
 ni trasladar registros de otra base.
 
 Al iniciar `RangelApplication`, Spring Boot obtiene la conexión desde las
@@ -34,8 +35,8 @@ un archivo ya aplicado puede causar un error de validación. Las modificaciones
 posteriores deben introducirse en una nueva migración.
 
 `spring.jpa.hibernate.ddl-auto=validate` evita que Hibernate cree o cambie
-tablas. Su validación cubre las entidades mapeadas; como aún no hay entidades
-JPA, no sustituye la revisión del esquema SQL completo. La creación de las
+tablas. Su validación cubre las entidades mapeadas; actualmente country es la
+primera, por lo que no sustituye la revisión del esquema SQL completo. La creación de las
 tablas corresponde a Flyway. `spring.flyway.clean-disabled=true` mantiene
 deshabilitada la limpieza de la base mediante Flyway.
 
@@ -67,9 +68,9 @@ rangel/
 | Elemento | Responsabilidad | Estado actual |
 | --- | --- | --- |
 | `pom.xml` raíz | Agrupar módulos, versión de Java y configuración heredada de Spring Boot | Proyecto padre; no es una aplicación ejecutable |
-| `domain` | Modelo y reglas de negocio independientes de infraestructura | DomainEvent y AggregateRoot compartidos |
-| `application` | Casos de uso que utilizan el dominio | ApplicationException compartida y dependencia de domain |
-| `infrastructure` | Integraciones, configuración y arranque de Spring Boot | Clase principal, propiedades, SQL y prueba de contexto |
+| `domain` | Modelo y reglas de negocio independientes de infraestructura | Base compartida y agregado country, ID, eventos y puerto |
+| `application` | Casos de uso que utilizan el dominio | Base compartida y cinco casos de uso CRUD de country |
+| `infrastructure` | Integraciones, configuración y arranque de Spring Boot | Arranque, SQL, API REST y adaptador JPA de country |
 | `.mvn/`, `mvnw`, `mvnw.cmd` | Ejecutar Maven con el wrapper del proyecto | Incluidos en el entregable |
 | `.gitignore` | Excluir compilación, archivos locales y referencias | Conserva fuentes y configuración compartida |
 
@@ -86,7 +87,7 @@ El archivo de configuración que se utiliza está en
 del editor que conserve la ruta anterior `src/main/resources` debe actualizarse.
 
 `domain` y `application` contienen la base compartida para implementar los contextos;
-los casos de uso de cada tabla se añadirán en las siguientes entregas. Las dependencias de
+country es el primer contexto implementado; los demás se añadirán en las siguientes entregas. Las dependencias de
 Spring, JPA y Flyway quedan en `infrastructure`. Las migraciones conservan
 sus nombres y contenido; su ubicación en el classpath continúa siendo
 `db/migration`.
@@ -153,10 +154,17 @@ no publica mensajes ni persiste eventos. Cada agregado futuro heredará de
 AggregateRoot y registrará sus eventos al crear o actualizar; restaurarlo desde
 la base no debe generar un nuevo evento de registro.
 
-Las entregas siguientes serán countries completa, state_regions y
+Country ya está implementado. Las entregas siguientes serán state_regions y
 city_municipalities, inicialmente una tabla por commit. Después se agruparán
 2–3 tablas sencillas; los contextos complejos se revisarán individualmente.
 Las migraciones existentes seguirán siendo la fuente de columnas y tipos.
+
+### Contexto country: primera tabla implementada
+
+La implementación de countries está documentada en [Guía de country](docs/country.md).
+Incluye las tres capas, los cinco endpoints CRUD y pruebas de dominio,
+casos de uso y conversión de persistencia. Las columnas se obtienen de V1;
+los archivos de migración no se han modificado.
 
 ## Entrega 1: V1 a V10
 
