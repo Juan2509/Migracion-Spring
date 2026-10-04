@@ -35,7 +35,8 @@ assessmenttype y consenttype según V31–V33, diagnosticsystem según V34
 y providermodelai según V35, aimodel según V36, airunstatus según V37
 y conversationstatus, priority y sendertype según V38–V40, chatconversation según V41
 y chatparticipant según V42, chatconversationaisettings según V43, messagetype según V44
-y chatmessage según V45.
+y chatmessage según V45, chatairun según V46, chatairunerror según V47
+y chatairunmetric según V48 y escalationstatus según V49.
 Los demás contextos siguen pendientes.
 Los scripts crean tablas y restricciones, sin cargar datos iniciales
 ni trasladar registros de otra base.
@@ -87,9 +88,9 @@ rangel/
 | Elemento | Responsabilidad | Estado actual |
 | --- | --- | --- |
 | `pom.xml` raíz | Agrupar módulos, versión de Java y configuración heredada de Spring Boot | Proyecto padre; no es una aplicación ejecutable |
-| `domain` | Modelo y reglas de negocio independientes de infraestructura | Base compartida y 45 contextos con agregados, IDs, eventos y puertos |
+| `domain` | Modelo y reglas de negocio independientes de infraestructura | Base compartida y 49 contextos con agregados, IDs, eventos y puertos |
 | `application` | Casos de uso que utilizan el dominio | Base compartida y cinco casos de uso CRUD por contexto implementado |
-| `infrastructure` | Integraciones, configuración y arranque de Spring Boot | Arranque, SQL, API REST y adaptadores JPA de los 45 contextos |
+| `infrastructure` | Integraciones, configuración y arranque de Spring Boot | Arranque, SQL, API REST y adaptadores JPA de los 49 contextos |
 | `.mvn/`, `mvnw`, `mvnw.cmd` | Ejecutar Maven con el wrapper del proyecto | Incluidos en el entregable |
 | `.gitignore` | Excluir compilación, archivos locales y referencias | Conserva fuentes y configuración compartida |
 
@@ -173,8 +174,8 @@ no publica mensajes ni persiste eventos. Cada agregado futuro heredará de
 AggregateRoot y registrará sus eventos al crear o actualizar; restaurarlo desde
 la base no debe generar un nuevo evento de registro.
 
-Los primeros 45 contextos ya están implementados. El siguiente contexto
-es chat_ai_runs. Las entregas
+Los primeros 49 contextos ya están implementados. El siguiente contexto
+es chat_escalations. Las entregas
 agrupan 2–3 tablas sencillas; los contextos complejos se revisan individualmente.
 Las migraciones existentes seguirán siendo la fuente de columnas y tipos.
 
@@ -463,12 +464,48 @@ LocalDateTime y se conserva al actualizar; no se añade updatedAt.
 Consultar [Guía de mensajes de chat](docs/mensajes-chat.md).
 La migración V45 mantiene su contenido original.
 
+### Contexto chatairun
+
+ChatAiRun incluye las tres capas y CRUD REST según V46. Valida conversación,
+mensaje, modelo y estado de ejecución antes de guardar. Las cuatro referencias
+son obligatorias y usan IDs tipados en dominio y UUID en JPA. La auditoría usa
+LocalDateTime y conserva createdAt al actualizar; no ejecuta llamadas a IA.
+Consultar [Guía de ejecuciones de IA](docs/ejecuciones-ia.md).
+La migración V46 conserva su contenido original.
+
+### Contexto chatairunerror
+
+ChatAiRunError incluye las tres capas y CRUD REST según V47. Comprueba la ejecución
+de IA antes de guardar, conserva errorMessage como TEXT y limita errorCode a 80
+caracteres y providerErrorId a 120. CreatedAt usa LocalDateTime y se conserva
+al actualizar; no se añade updatedAt ni unicidad.
+Consultar [Guía de errores de IA](docs/errores-ia.md).
+La migración V47 conserva su contenido original.
+
+### Contexto chatairunmetric
+
+ChatAiRunMetric incluye las tres capas y CRUD REST según V48. Valida la ejecución
+de IA, conserva los tres conteos INTEGER y usa BigDecimal para DECIMAL(10,6).
+CreatedAt usa LocalDateTime y se conserva al actualizar; no se añade updatedAt
+ni cálculo automático del total de tokens.
+Consultar [Guía de métricas de IA](docs/metricas-ia.md).
+La migración V48 conserva su contenido original.
+
+### Contexto escalationstatus
+
+EscalationStatus incluye las tres capas y CRUD REST según V49. NameStatus es
+obligatorio, admite hasta 50 caracteres y permite valores repetidos.
+La auditoría usa LocalDateTime y conserva createdAt al actualizar. No se añaden
+estados predefinidos ni reglas de transición.
+Consultar [Guía de estados de escalación](docs/estados-escalacion.md).
+La migración V49 conserva su contenido original.
+
 ### Avance de implementación
 
 | Parte del trabajo | Estado |
 | --- | --- |
 | Scripts de creación del esquema | 52 de 52 creados (100 %) |
-| Contextos en dominio, aplicación e infraestructura | 45 de 52 implementados (86,5 %) |
+| Contextos en dominio, aplicación e infraestructura | 49 de 52 implementados (94,2 %) |
 | Integración HTTP y validación en PostgreSQL | Pendiente de conexión |
 
 El porcentaje comunicado en cada entrega se calcula como contextos implementados

@@ -1,0 +1,24 @@
+package com.migracion.rangel.application.chatairunmetric.usecase;
+import java.math.BigDecimal;
+import com.migracion.rangel.domain.chatairun.port.repository.ChatAiRunRepository;
+import com.migracion.rangel.application.chatairun.exception.ChatAiRunNotFoundApplicationException;
+import com.migracion.rangel.domain.chatairunmetric.port.repository.ChatAiRunMetricRepository;
+import com.migracion.rangel.domain.chatairunmetric.model.valueobject.ChatAiRunMetricId;
+import com.migracion.rangel.application.chatairunmetric.dto.ChatAiRunMetricResponse;
+import com.migracion.rangel.application.chatairunmetric.exception.ChatAiRunMetricNotFoundApplicationException;
+import com.migracion.rangel.application.chatairunmetric.command.RegisterChatAiRunMetricCommand;
+import com.migracion.rangel.domain.chatairunmetric.model.aggregate.ChatAiRunMetric;
+public class RegisterChatAiRunMetricUseCase {
+    private final ChatAiRunMetricRepository repository;
+    private final ChatAiRunRepository runs;
+    public RegisterChatAiRunMetricUseCase(ChatAiRunMetricRepository repository, ChatAiRunRepository runs) {
+        this.repository = java.util.Objects.requireNonNull(repository);
+        this.runs = java.util.Objects.requireNonNull(runs);
+    }
+    public ChatAiRunMetricResponse execute(RegisterChatAiRunMetricCommand command) {
+        var aggregate = ChatAiRunMetric.register(command.aiRunId(), command.promptTokens(), command.completionTokens(), command.totalTokens(), command.cost());
+        runs.findById(command.aiRunId()).orElseThrow(() -> new ChatAiRunNotFoundApplicationException(command.aiRunId()));
+        return ChatAiRunMetricResponse.from(repository.save(aggregate));
+    }
+}
+
