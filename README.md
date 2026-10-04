@@ -32,7 +32,10 @@ encounter según V22, clinicalnote según V23, mentalstatusexam según V24 y
 risklevel/riskassessment según V25–V26, treatmentstatus/treatmentplan según V27–V28
 y treatmentgoalstatus/treatmentgoal según V29–V30 y medicationroute,
 assessmenttype y consenttype según V31–V33, diagnosticsystem según V34
-y providermodelai según V35, aimodel según V36 y airunstatus según V37.
+y providermodelai según V35, aimodel según V36, airunstatus según V37
+y conversationstatus, priority y sendertype según V38–V40, chatconversation según V41
+y chatparticipant según V42, chatconversationaisettings según V43, messagetype según V44
+y chatmessage según V45.
 Los demás contextos siguen pendientes.
 Los scripts crean tablas y restricciones, sin cargar datos iniciales
 ni trasladar registros de otra base.
@@ -84,9 +87,9 @@ rangel/
 | Elemento | Responsabilidad | Estado actual |
 | --- | --- | --- |
 | `pom.xml` raíz | Agrupar módulos, versión de Java y configuración heredada de Spring Boot | Proyecto padre; no es una aplicación ejecutable |
-| `domain` | Modelo y reglas de negocio independientes de infraestructura | Base compartida y 37 contextos con agregados, IDs, eventos y puertos |
+| `domain` | Modelo y reglas de negocio independientes de infraestructura | Base compartida y 45 contextos con agregados, IDs, eventos y puertos |
 | `application` | Casos de uso que utilizan el dominio | Base compartida y cinco casos de uso CRUD por contexto implementado |
-| `infrastructure` | Integraciones, configuración y arranque de Spring Boot | Arranque, SQL, API REST y adaptadores JPA de los 37 contextos |
+| `infrastructure` | Integraciones, configuración y arranque de Spring Boot | Arranque, SQL, API REST y adaptadores JPA de los 45 contextos |
 | `.mvn/`, `mvnw`, `mvnw.cmd` | Ejecutar Maven con el wrapper del proyecto | Incluidos en el entregable |
 | `.gitignore` | Excluir compilación, archivos locales y referencias | Conserva fuentes y configuración compartida |
 
@@ -170,8 +173,8 @@ no publica mensajes ni persiste eventos. Cada agregado futuro heredará de
 AggregateRoot y registrará sus eventos al crear o actualizar; restaurarlo desde
 la base no debe generar un nuevo evento de registro.
 
-Los primeros 37 contextos ya están implementados. El siguiente contexto
-es conversations_statuses. Las entregas
+Los primeros 45 contextos ya están implementados. El siguiente contexto
+es chat_ai_runs. Las entregas
 agrupan 2–3 tablas sencillas; los contextos complejos se revisan individualmente.
 Las migraciones existentes seguirán siendo la fuente de columnas y tipos.
 
@@ -407,12 +410,65 @@ LocalDateTime y conserva createdAt al actualizar. No se añaden códigos ni regl
 de transición. Consultar [Guía de estados de ejecución de IA](docs/estados-ejecucion-ia.md).
 La migración V37 conserva su contenido original.
 
+### Catálogos conversationstatus, priority y sendertype
+
+Los tres incluyen las tres capas y CRUD REST según V38–V40. Sus nombres son
+obligatorios, admiten hasta 50 caracteres y permiten valores repetidos.
+La auditoría usa LocalDateTime y conserva createdAt al actualizar. No se añaden
+reglas de transición, orden de prioridades ni tipos predefinidos de remitente.
+Consultar [Guía de catálogos de chat](docs/catalogos-chat.md).
+V38–V40 conservan su contenido original.
+
+### Contexto chatconversation
+
+ChatConversation incluye las tres capas y CRUD REST según V41. Comprueba estado
+y prioridad antes de guardar mediante IDs tipados y puertos. LastMessageAt, closed,
+closedAt y closedBy admiten null; closedBy conserva UUID sin añadir una FK.
+La auditoría usa LocalDateTime y conserva createdAt al actualizar.
+Consultar [Guía de conversaciones](docs/conversaciones.md).
+La migración V41 conserva su contenido original.
+
+### Contexto chatparticipant
+
+ChatParticipant incluye las tres capas y CRUD REST según V42. Valida conversación
+y tipo de participante, además de paciente y profesional cuando se proporcionan.
+Las referencias usan IDs tipados en dominio y UUID en JPA; las dos últimas
+admiten null y pueden coexistir según el SQL. La auditoría usa LocalDateTime.
+Consultar [Guía de participantes de chat](docs/participantes-chat.md).
+La migración V42 conserva su contenido original.
+
+### Contexto chatconversationaisettings
+
+ChatConversationAiSettings incluye las tres capas y CRUD REST según V43.
+Valida conversación y modelo predeterminado, ambos obligatorios incluso cuando
+aiEnabled es false. Permite varias configuraciones por conversación, según el SQL,
+y conserva createdAt al actualizar. La auditoría usa LocalDateTime.
+Consultar [Guía de configuración de IA del chat](docs/configuracion-ia-chat.md).
+La migración V43 conserva su contenido original.
+
+### Contexto messagetype
+
+MessageType incluye las tres capas y CRUD REST según V44. NameType es obligatorio,
+admite hasta 50 caracteres y permite valores repetidos. La auditoría usa
+LocalDateTime y conserva createdAt al actualizar. No se cargan tipos predefinidos.
+Consultar [Guía de tipos de mensaje](docs/tipos-mensaje.md).
+La migración V44 conserva su contenido original.
+
+### Contexto chatmessage
+
+ChatMessage incluye las tres capas y CRUD REST según V45. Valida conversación,
+tipo de mensaje y participante antes de guardar. Content y metadata conservan
+JSONB y se reciben y devuelven como JSON estructurado en REST. CreatedAt usa
+LocalDateTime y se conserva al actualizar; no se añade updatedAt.
+Consultar [Guía de mensajes de chat](docs/mensajes-chat.md).
+La migración V45 mantiene su contenido original.
+
 ### Avance de implementación
 
 | Parte del trabajo | Estado |
 | --- | --- |
 | Scripts de creación del esquema | 52 de 52 creados (100 %) |
-| Contextos en dominio, aplicación e infraestructura | 37 de 52 implementados (71,2 %) |
+| Contextos en dominio, aplicación e infraestructura | 45 de 52 implementados (86,5 %) |
 | Integración HTTP y validación en PostgreSQL | Pendiente de conexión |
 
 El porcentaje comunicado en cada entrega se calcula como contextos implementados
