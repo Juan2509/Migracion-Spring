@@ -17,27 +17,10 @@ referencias de organización.
 ## Funcionamiento
 
 El entregable crea el esquema de MindConnect mediante 52 archivos SQL
-versionados. Actualmente contiene la estructura modular y las migraciones;
-los módulos de negocio incluyen la base compartida y el contexto country con
-casos de uso, entidad JPA y API REST. También está implementado stateregion,
-que referencia a country por su ID, y citymunicipality, que referencia a
-stateregion por su ID. También están implementados documenttype, gender y
-professionaltype, con sus restricciones de unicidad, y relationshiptype y
-study, adaptados a V7–V8, professional según V9, contact según V10 y
-phonecontact/emailcontact según V11–V12, professionalstudy según V13 y patient
-según V14, patientcontact según V15, patientallergy según V16 y
-clinicalrecordstatus/clinicalrecord según V17–V18 y los catálogos
-encountertype, encountermodality y encounterstatus según V19–V21, además de
-encounter según V22, clinicalnote según V23, mentalstatusexam según V24 y
-risklevel/riskassessment según V25–V26, treatmentstatus/treatmentplan según V27–V28
-y treatmentgoalstatus/treatmentgoal según V29–V30 y medicationroute,
-assessmenttype y consenttype según V31–V33, diagnosticsystem según V34
-y providermodelai según V35, aimodel según V36, airunstatus según V37
-y conversationstatus, priority y sendertype según V38–V40, chatconversation según V41
-y chatparticipant según V42, chatconversationaisettings según V43, messagetype según V44
-y chatmessage según V45, chatairun según V46, chatairunerror según V47
-y chatairunmetric según V48 y escalationstatus según V49.
-Los demás contextos siguen pendientes.
+versionados. Los 52 contextos correspondientes a V1–V52 están implementados
+en domain, application e infrastructure: cada uno incluye agregado, ID,
+eventos, puerto de repositorio, cinco casos de uso CRUD, API REST y persistencia
+JPA. Las secciones de cada contexto explican sus restricciones y particularidades.
 Los scripts crean tablas y restricciones, sin cargar datos iniciales
 ni trasladar registros de otra base.
 
@@ -53,10 +36,8 @@ un archivo ya aplicado puede causar un error de validación. Las modificaciones
 posteriores deben introducirse en una nueva migración.
 
 `spring.jpa.hibernate.ddl-auto=validate` evita que Hibernate cree o cambie
-tablas. Su validación cubre las entidades mapeadas; actualmente country es la
-primera, acompañada por stateregion, citymunicipality y los tres catálogos
-documenttype, gender y professionaltype, por lo que no sustituye
-la revisión del esquema SQL completo. La creación de las
+tablas. Su validación cubre las entidades de los 52 contextos, pero no sustituye
+la revisión de las FK y demás restricciones del esquema SQL completo. La creación de las
 tablas corresponde a Flyway. `spring.flyway.clean-disabled=true` mantiene
 deshabilitada la limpieza de la base mediante Flyway.
 
@@ -88,9 +69,9 @@ rangel/
 | Elemento | Responsabilidad | Estado actual |
 | --- | --- | --- |
 | `pom.xml` raíz | Agrupar módulos, versión de Java y configuración heredada de Spring Boot | Proyecto padre; no es una aplicación ejecutable |
-| `domain` | Modelo y reglas de negocio independientes de infraestructura | Base compartida y 49 contextos con agregados, IDs, eventos y puertos |
+| `domain` | Modelo y reglas de negocio independientes de infraestructura | Base compartida y 52 contextos con agregados, IDs, eventos y puertos |
 | `application` | Casos de uso que utilizan el dominio | Base compartida y cinco casos de uso CRUD por contexto implementado |
-| `infrastructure` | Integraciones, configuración y arranque de Spring Boot | Arranque, SQL, API REST y adaptadores JPA de los 49 contextos |
+| `infrastructure` | Integraciones, configuración y arranque de Spring Boot | Arranque, SQL, API REST y adaptadores JPA de los 52 contextos |
 | `.mvn/`, `mvnw`, `mvnw.cmd` | Ejecutar Maven con el wrapper del proyecto | Incluidos en el entregable |
 | `.gitignore` | Excluir compilación, archivos locales y referencias | Conserva fuentes y configuración compartida |
 
@@ -106,8 +87,8 @@ El archivo de configuración que se utiliza está en
 `infrastructure/src/main/resources/application.properties`; cualquier pestaña
 del editor que conserve la ruta anterior `src/main/resources` debe actualizarse.
 
-`domain` y `application` contienen la base compartida para implementar los contextos;
-country es el primer contexto implementado; los demás se añadirán en las siguientes entregas. Las dependencias de
+`domain` y `application` contienen la base compartida y los 52 contextos.
+Las dependencias de
 Spring, JPA y Flyway quedan en `infrastructure`. Las migraciones conservan
 sus nombres y contenido; su ubicación en el classpath continúa siendo
 `db/migration`.
@@ -174,10 +155,11 @@ no publica mensajes ni persiste eventos. Cada agregado futuro heredará de
 AggregateRoot y registrará sus eventos al crear o actualizar; restaurarlo desde
 la base no debe generar un nuevo evento de registro.
 
-Los primeros 49 contextos ya están implementados. El siguiente contexto
-es chat_escalations. Las entregas
-agrupan 2–3 tablas sencillas; los contextos complejos se revisan individualmente.
-Las migraciones existentes seguirán siendo la fuente de columnas y tipos.
+Los 52 contextos ya están implementados. Las entregas agruparon 2–3 tablas
+sencillas y revisaron los contextos complejos individualmente.
+Las migraciones existentes son la fuente de columnas y tipos.
+Queda pendiente configurar la conexión y verificar el arranque, los endpoints
+HTTP y las migraciones en PostgreSQL, además de resolver la FK de proveedores de IA.
 
 ### Contexto country: primera tabla implementada
 
@@ -500,12 +482,37 @@ estados predefinidos ni reglas de transición.
 Consultar [Guía de estados de escalación](docs/estados-escalacion.md).
 La migración V49 conserva su contenido original.
 
+### Contexto chatescalation
+
+ChatEscalation implementa V50 con conversación, estado, fromAi y motivo
+obligatorios. Los casos de uso comprueban que la conversación y el estado existen.
+El motivo conserva el tipo TEXT, y createdAt se mantiene al actualizar.
+Consultar [Guía de escalaciones de chat](docs/escalaciones-chat.md).
+La migración V50 conserva su contenido original.
+
+### Contexto chatescalationassignment
+
+ChatEscalationAssignment implementa V51 con escalación, profesional y fecha
+de asignación obligatorios. Los casos de uso verifican ambas referencias antes
+de guardar; se permiten asignaciones repetidas según las restricciones del SQL.
+Consultar [Guía de asignaciones de escalación](docs/asignaciones-escalacion.md).
+La migración V51 conserva su contenido original.
+
+### Contexto chatescalationstatushistory
+
+ChatEscalationStatusHistory implementa V52 con escalación, estado y fecha
+de cambio obligatorios. Los casos de uso verifican ambas referencias;
+createdAt se genera al registrar y se conserva al actualizar. Registrar
+el historial no modifica automáticamente el estado de la escalación.
+Consultar [Guía del historial de estados](docs/historial-estados-escalacion.md).
+La migración V52 conserva su contenido original.
+
 ### Avance de implementación
 
 | Parte del trabajo | Estado |
 | --- | --- |
 | Scripts de creación del esquema | 52 de 52 creados (100 %) |
-| Contextos en dominio, aplicación e infraestructura | 49 de 52 implementados (94,2 %) |
+| Contextos en dominio, aplicación e infraestructura | 52 de 52 implementados (100 %) |
 | Integración HTTP y validación en PostgreSQL | Pendiente de conexión |
 
 El porcentaje comunicado en cada entrega se calcula como contextos implementados
