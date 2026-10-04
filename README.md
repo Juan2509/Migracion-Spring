@@ -28,7 +28,11 @@ phonecontact/emailcontact según V11–V12, professionalstudy según V13 y patie
 según V14, patientcontact según V15, patientallergy según V16 y
 clinicalrecordstatus/clinicalrecord según V17–V18 y los catálogos
 encountertype, encountermodality y encounterstatus según V19–V21, además de
-encounter según V22, clinicalnote según V23 y mentalstatusexam según V24.
+encounter según V22, clinicalnote según V23, mentalstatusexam según V24 y
+risklevel/riskassessment según V25–V26, treatmentstatus/treatmentplan según V27–V28
+y treatmentgoalstatus/treatmentgoal según V29–V30 y medicationroute,
+assessmenttype y consenttype según V31–V33, diagnosticsystem según V34
+y providermodelai según V35, aimodel según V36 y airunstatus según V37.
 Los demás contextos siguen pendientes.
 Los scripts crean tablas y restricciones, sin cargar datos iniciales
 ni trasladar registros de otra base.
@@ -80,9 +84,9 @@ rangel/
 | Elemento | Responsabilidad | Estado actual |
 | --- | --- | --- |
 | `pom.xml` raíz | Agrupar módulos, versión de Java y configuración heredada de Spring Boot | Proyecto padre; no es una aplicación ejecutable |
-| `domain` | Modelo y reglas de negocio independientes de infraestructura | Base compartida y veinticuatro contextos con agregados, IDs, eventos y puertos |
+| `domain` | Modelo y reglas de negocio independientes de infraestructura | Base compartida y 37 contextos con agregados, IDs, eventos y puertos |
 | `application` | Casos de uso que utilizan el dominio | Base compartida y cinco casos de uso CRUD por contexto implementado |
-| `infrastructure` | Integraciones, configuración y arranque de Spring Boot | Arranque, SQL, API REST y adaptadores JPA de los veinticuatro contextos |
+| `infrastructure` | Integraciones, configuración y arranque de Spring Boot | Arranque, SQL, API REST y adaptadores JPA de los 37 contextos |
 | `.mvn/`, `mvnw`, `mvnw.cmd` | Ejecutar Maven con el wrapper del proyecto | Incluidos en el entregable |
 | `.gitignore` | Excluir compilación, archivos locales y referencias | Conserva fuentes y configuración compartida |
 
@@ -166,8 +170,8 @@ no publica mensajes ni persiste eventos. Cada agregado futuro heredará de
 AggregateRoot y registrará sus eventos al crear o actualizar; restaurarlo desde
 la base no debe generar un nuevo evento de registro.
 
-Los primeros veinticuatro contextos ya están implementados. Los siguientes contextos
-son risk_levels y risk_assessments. Las entregas
+Los primeros 37 contextos ya están implementados. El siguiente contexto
+es conversations_statuses. Las entregas
 agrupan 2–3 tablas sencillas; los contextos complejos se revisan individualmente.
 Las migraciones existentes seguirán siendo la fuente de columnas y tipos.
 
@@ -332,12 +336,83 @@ conservan al actualizar. No se añade auditoría de actualización ni unicidad.
 Consultar [Guía de exámenes del estado mental](docs/mentalstatusexam.md).
 V24 conserva su contenido original.
 
+### Contextos risklevel y riskassessment
+
+Ambos tienen las tres capas y CRUD REST según V25–V26. RiskLevel exige código
+único y severity entero obligatorio; permite nombres repetidos. RiskAssessment
+valida encuentro, nivel y evaluador, exige cinco indicadores y cuatro textos,
+y usa OffsetDateTime para assessedAt. No se añade auditoría ni cálculo automático
+del riesgo a V26. Consultar [Guía de niveles y evaluaciones de riesgo](docs/riesgos.md).
+V25 y V26 mantienen su contenido.
+
+### Contextos treatmentstatus y treatmentplan
+
+Ambos tienen las tres capas y CRUD REST según V27–V28. El estado exige código
+y nombre únicos; el plan valida encuentro, profesional y estado. StartDate y
+endDate usan LocalDate y son obligatorios. La descripción conserva TEXT y la
+auditoría usa OffsetDateTime, manteniendo createdAt al actualizar.
+Consultar [Guía de estados y planes de tratamiento](docs/tratamientos.md).
+V27 y V28 conservan su contenido.
+
+### Contextos treatmentgoalstatus y treatmentgoal
+
+Ambos incluyen las tres capas y CRUD REST según V29–V30. El catálogo exige código
+y nombre únicos; el objetivo valida plan y estado. Se conserva treatmentGoalId
+como referencia al estado, siguiendo treatment_goal_id del SQL. TargetDate usa
+LocalDate, completedAt usa OffsetDateTime y la auditoría usa LocalDateTime.
+CompletedAt es obligatorio y los textos conservan TEXT.
+Consultar [Guía de objetivos de tratamiento](docs/objetivos-tratamiento.md).
+V29 y V30 conservan su contenido.
+
+### Catálogos medicationroute, assessmenttype y consenttype
+
+Incluyen las tres capas y CRUD REST según V31–V33. MedicationRoute y AssessmentType
+exigen código único y admiten nombres repetidos. ConsentType admite códigos y
+nombres repetidos. AssessmentType y ConsentType incluyen description obligatorio
+de tipo TEXT. La auditoría usa LocalDateTime y conserva createdAt al actualizar.
+Consultar [Guía de catálogos clínicos](docs/catalogos-clinicos.md).
+V31–V33 mantienen su contenido original.
+
+### Contexto diagnosticsystem
+
+DiagnosticSystem incluye las tres capas y CRUD REST según V34. Exige código
+único; name admite valores repetidos y version es obligatorio con un máximo de
+20 caracteres. La auditoría usa LocalDateTime y conserva createdAt al actualizar.
+Consultar [Guía de sistemas diagnósticos](docs/sistemas-diagnosticos.md).
+V34 conserva su contenido original.
+
+### Contexto providermodelai
+
+ProviderModelAi incluye las tres capas y CRUD REST según V35. El nombre del
+proveedor admite hasta 100 caracteres, razonSocial conserva VARCHAR sin límite
+declarado y sitioWeb conserva TEXT. El mapeo mantiene la columna entre comillas
+"isActive". Se admiten valores repetidos y la auditoría usa LocalDateTime.
+Consultar [Guía de proveedores de IA](docs/proveedores-ia.md).
+V35 conserva su contenido; la relación pendiente de ai_models no cambia.
+
+### Contexto aimodel
+
+AiModel incluye las tres capas y CRUD REST según V36. Los precios usan BigDecimal
+y respetan DECIMAL(12,8); los textos y enteros mantienen las reglas del SQL.
+ProviderModelId conserva String porque la FK al proveedor sigue pendiente por
+incompatibilidad de tipos. No se fuerza UUID ni se comprueba una relación ausente
+en V36. Consultar [Guía de modelos de IA](docs/modelos-ia.md).
+La migración V36 mantiene su contenido original.
+
+### Contexto airunstatus
+
+AiRunStatus incluye las tres capas y CRUD REST según V37. NameStatus es obligatorio,
+admite hasta 50 caracteres y permite valores repetidos. La auditoría usa
+LocalDateTime y conserva createdAt al actualizar. No se añaden códigos ni reglas
+de transición. Consultar [Guía de estados de ejecución de IA](docs/estados-ejecucion-ia.md).
+La migración V37 conserva su contenido original.
+
 ### Avance de implementación
 
 | Parte del trabajo | Estado |
 | --- | --- |
 | Scripts de creación del esquema | 52 de 52 creados (100 %) |
-| Contextos en dominio, aplicación e infraestructura | 24 de 52 implementados (46,2 %) |
+| Contextos en dominio, aplicación e infraestructura | 37 de 52 implementados (71,2 %) |
 | Integración HTTP y validación en PostgreSQL | Pendiente de conexión |
 
 El porcentaje comunicado en cada entrega se calcula como contextos implementados
