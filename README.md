@@ -43,8 +43,12 @@ deshabilitada la limpieza de la base mediante Flyway.
 
 **Estado de verificación:** se comprobó la numeración V1–V52, el orden de
 referencias y la compilación Maven, y se verificó que el JAR incluye los 52 SQL.
-La ejecución real en PostgreSQL sigue pendiente de configurar la conexión.
-La FK entre modelos de IA y proveedores también está pendiente por los tipos
+El 6 de octubre de 2026 se verificó el proyecto con Java 25 y PostgreSQL 14
+temporal: pasaron 318 pruebas unitarias y la prueba de contexto; Flyway aplicó
+las 52 migraciones y Hibernate validó los mapeos. Esta comprobación no utiliza
+la base del proyecto ni verifica todos los endpoints HTTP. La conexión del
+entorno de trabajo debe configurarse por separado.
+La FK entre modelos de IA y proveedores sigue pendiente por los tipos
 incompatibles descritos en la entrega 4.
 
 ## Organización del proyecto
@@ -158,8 +162,9 @@ la base no debe generar un nuevo evento de registro.
 Los 52 contextos ya están implementados. Las entregas agruparon 2–3 tablas
 sencillas y revisaron los contextos complejos individualmente.
 Las migraciones existentes son la fuente de columnas y tipos.
-Queda pendiente configurar la conexión y verificar el arranque, los endpoints
-HTTP y las migraciones en PostgreSQL, además de resolver la FK de proveedores de IA.
+El arranque y las migraciones se verificaron con PostgreSQL temporal. Quedan
+pendientes la conexión al entorno de trabajo, la comprobación de los endpoints
+HTTP y resolver la FK de proveedores de IA.
 
 ### Contexto country: primera tabla implementada
 
@@ -757,10 +762,9 @@ Esta prueba arranca el contexto de Spring Boot y puede aplicar migraciones;
 utilizar una base de desarrollo dedicada. No es una prueba exhaustiva de las
 52 tablas ni de las reglas de negocio.
 
-La ejecución contra PostgreSQL está pendiente de los datos de conexión. Este
-bloque crea estructura, no transfiere registros desde otra base de datos.
-El siguiente paso es configurar la conexión y validar las 52 migraciones en
-PostgreSQL. No modificar SQL
+La ejecución se verificó contra PostgreSQL temporal; la conexión a la base del
+entorno de trabajo aún requiere sus variables de entorno. Este bloque crea
+estructura, no transfiere registros desde otra base de datos. No modificar SQL
 que ya se haya aplicado; los cambios posteriores requieren una nueva versión.
 
 ## Cómo reconstruir el proyecto
@@ -847,3 +851,23 @@ Para volver a implementar el proyecto, seguir este orden:
 Ante un error de Flyway, revisar el mensaje y el estado de la base antes de
 reintentar. No cambiar checksums o borrar el historial para ocultar una diferencia
 entre los archivos y el esquema instalado.
+
+
+### Comprobaciones sin conexión a PostgreSQL
+
+El proyecto requiere un JDK 25. En Linux, el wrapper se ejecuta con `./mvnw`.
+Para probar el dominio, los casos de uso y los mapeadores de persistencia sin
+arrancar Spring ni conectar a PostgreSQL:
+
+```bash
+./mvnw test '-Dtest=*Test' -Dsurefire.failIfNoSpecifiedTests=false
+```
+
+El patrón `*Test` incluye las pruebas unitarias existentes y deja fuera
+`RangelApplicationTests`, la prueba de arranque. Para ejecutar también esa
+prueba, configura `DB_URL`, `DB_USERNAME` y `DB_PASSWORD` y utiliza
+`./mvnw test`. El arranque aplica las migraciones pendientes a la base indicada.
+
+Infraestructura declara explícitamente sus dependencias de `application` y
+`domain`. La persistencia configurada utiliza PostgreSQL; no incluye MySQL
+ni Thymeleaf, ya que no hay vistas HTML en este proyecto.
