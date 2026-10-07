@@ -1,5 +1,13 @@
 # Rangel: esquema de MindConnect
 
+La API requiere HTTP Basic: configurar `SECURITY_USERNAME` y
+`SECURITY_PASSWORD` junto con las variables de PostgreSQL. Consultar
+[Seguridad HTTP y pruebas H2](docs/seguridad.md) para el flujo CSRF.
+Las pruebas de contexto ahora usan H2 en memoria mediante el perfil `test`;
+`./mvnw test` no necesita una base PostgreSQL externa. H2 solo se incluye en
+pruebas; las instrucciones posteriores de conexion corresponden al arranque
+normal. La validacion contra PostgreSQL sigue siendo una comprobacion aparte.
+
 Proyecto Spring Boot con migraciones Flyway para PostgreSQL. El diagrama de
 MindConnect es la fuente del esquema; los proyectos compartidos se utilizan como
 referencias de organización.
@@ -752,15 +760,15 @@ ORDER BY installed_rank;
 
 En una primera ejecución completa deben aparecer las versiones 1 a 52 con
 `success = true`. Revisar también las tablas y sus restricciones desde pgAdmin.
-Para ejecutar la prueba de contexto una vez disponible la conexión:
+Para ejecutar las pruebas, incluida la prueba de contexto con H2:
 
 ```powershell
 .\mvnw.cmd test
 ```
 
-Esta prueba arranca el contexto de Spring Boot y puede aplicar migraciones;
-utilizar una base de desarrollo dedicada. No es una prueba exhaustiva de las
-52 tablas ni de las reglas de negocio.
+La prueba de contexto activa el perfil `test` y aplica las migraciones en H2
+en memoria. No es una prueba exhaustiva de las 52 tablas ni sustituye la
+validacion de PostgreSQL.
 
 La ejecución se verificó contra PostgreSQL temporal; la conexión a la base del
 entorno de trabajo aún requiere sus variables de entorno. Este bloque crea
@@ -865,9 +873,9 @@ arrancar Spring ni conectar a PostgreSQL:
 
 El patrón `*Test` incluye las pruebas unitarias existentes y deja fuera
 `RangelApplicationTests`, la prueba de arranque. Para ejecutar también esa
-prueba, configura `DB_URL`, `DB_USERNAME` y `DB_PASSWORD` y utiliza
-`./mvnw test`. El arranque aplica las migraciones pendientes a la base indicada.
+prueba, utiliza `./mvnw test`; activa H2 en memoria mediante el perfil `test`.
+Las pruebas de seguridad tambien arrancan el contexto con ese perfil.
 
 Infraestructura declara explícitamente sus dependencias de `application` y
-`domain`. La persistencia configurada utiliza PostgreSQL; no incluye MySQL
-ni Thymeleaf, ya que no hay vistas HTML en este proyecto.
+`domain`. La persistencia de ejecucion utiliza PostgreSQL y las pruebas de
+contexto utilizan H2. No incluye MySQL ni Thymeleaf.
