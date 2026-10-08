@@ -1,5 +1,24 @@
 # Rangel: esquema de MindConnect
 
+## Entregas académicas
+
+Este repositorio reúne dos entregas del mismo proyecto. La seguridad se añade
+sobre la aplicación de migraciones y DDD; las carpetas compartidas no representan
+entregas independientes.
+
+| Entrega | Estado al 8 de octubre de 2026 | Documento de revisión |
+| --- | --- | --- |
+| 1. Actividad Spring, migraciones y DDD | Componentes principales implementados; limitaciones y verificaciones pendientes documentadas | [Entrega 1](docs/entrega-1-migraciones-ddd.md) |
+| 2. Implementación del módulo de seguridad JWT con Spring | Parcial: Spring Security con HTTP Basic y CSRF implementado; JWT pendiente | [Entrega 2](docs/entrega-2-seguridad-jwt.md) |
+
+Los seis **bloques de migraciones** descritos más adelante pertenecen todos a
+la entrega académica 1. Su numeración no identifica entregas académicas.
+La revisión del 8 de octubre de 2026 ejecutó `./mvnw test -o`: **325 pruebas,
+sin fallos ni errores**, con las 52 migraciones aplicadas en H2. Ese resultado
+no acredita JWT ni equivale a una validación exhaustiva en PostgreSQL.
+
+## Configuración actual
+
 La API requiere HTTP Basic: configurar `SECURITY_USERNAME` y
 `SECURITY_PASSWORD` junto con las variables de PostgreSQL. Consultar
 [Seguridad HTTP y pruebas H2](docs/seguridad.md) para el flujo CSRF.
@@ -14,9 +33,11 @@ referencias de organización.
 
 ## Guía de lectura
 
+- [Entrega 1: Spring, migraciones y DDD](docs/entrega-1-migraciones-ddd.md)
+- [Entrega 2: seguridad JWT, estado y pendientes](docs/entrega-2-seguridad-jwt.md)
 - [Funcionamiento](#funcionamiento)
 - [Estructura y responsabilidades](#organización-del-proyecto)
-- [Inventario de las 52 migraciones](#entrega-1-v1-a-v10)
+- [Inventario de las 52 migraciones](#bloque-de-migraciones-1-v1-a-v10)
 - [Configuración y ejecución](#conexión-y-ejecución)
 - [Cómo reconstruir el proyecto](#cómo-reconstruir-el-proyecto)
 - [Cómo reproducir el trabajo desde el diagrama](#cómo-reproducir-el-trabajo-desde-el-diagrama)
@@ -57,7 +78,7 @@ las 52 migraciones y Hibernate validó los mapeos. Esta comprobación no utiliza
 la base del proyecto ni verifica todos los endpoints HTTP. La conexión del
 entorno de trabajo debe configurarse por separado.
 La FK entre modelos de IA y proveedores sigue pendiente por los tipos
-incompatibles descritos en la entrega 4.
+incompatibles descritos en el bloque de migraciones 4.
 
 ## Organización del proyecto
 
@@ -163,8 +184,8 @@ domain y application, accesibles desde Java Projects:
 | ApplicationException | application: common/exception | Base de excepciones con mensaje y causa opcional |
 
 Estas clases usan únicamente Java. El registro de eventos es en memoria:
-no publica mensajes ni persiste eventos. Cada agregado futuro heredará de
-AggregateRoot y registrará sus eventos al crear o actualizar; restaurarlo desde
+no publica mensajes ni persiste eventos. Los agregados heredan de
+AggregateRoot y registran sus eventos al crear o actualizar; restaurarlos desde
 la base no debe generar un nuevo evento de registro.
 
 Los 52 contextos ya están implementados. Las entregas agruparon 2–3 tablas
@@ -520,20 +541,22 @@ el historial no modifica automáticamente el estado de la escalación.
 Consultar [Guía del historial de estados](docs/historial-estados-escalacion.md).
 La migración V52 conserva su contenido original.
 
-### Avance de implementación
+### Avance de la entrega académica 1
 
 | Parte del trabajo | Estado |
 | --- | --- |
 | Scripts de creación del esquema | 52 de 52 creados (100 %) |
 | Contextos en dominio, aplicación e infraestructura | 52 de 52 implementados (100 %) |
-| Integración HTTP y validación en PostgreSQL | Pendiente de conexión |
+| Integración HTTP | Pruebas de seguridad y flujo de country; cobertura exhaustiva de endpoints pendiente |
+| Migraciones y mapeos en H2 | V1–V52 aplicadas y contexto validado en la revisión del 8 de octubre de 2026 |
+| Validación en PostgreSQL del entorno de trabajo | Pendiente de conexión; la comprobación histórica con PostgreSQL temporal se describe arriba |
 
-El porcentaje comunicado en cada entrega se calcula como contextos implementados
+El porcentaje comunicado en cada bloque se calcula como contextos implementados
 dividido por 52. Es una medida de cobertura, no de horas consumidas: la complejidad
 de las tablas varía y no incluye la integración pendiente. Tener todos los SQL
 creados no significa que se hayan ejecutado o validado en una base real.
 
-## Entrega 1: V1 a V10
+## Bloque de migraciones 1: V1 a V10
 
 Las migraciones están en `infrastructure/src/main/resources/db/migration`. Este bloque crea:
 
@@ -562,7 +585,7 @@ Las restricciones UNIQUE sobre nombres de profesionales se mantienen porque
 están marcadas en el diagrama, aunque impiden registrar nombres repetidos.
 No se agregan valores por defecto ni reglas de borrado en cascada.
 
-## Entrega 2: V11 a V20
+## Bloque de migraciones 2: V11 a V20
 
 | Versión | Tabla | Referencias |
 | --- | --- | --- |
@@ -590,7 +613,7 @@ tener marca N; esto exige proporcionar fecha de cierre al crear una historia.
 Se mantiene esa restricción del diagrama, pendiente de una decisión funcional
 si deben admitirse historias abiertas sin fecha de cierre.
 
-## Entrega 3: V21 a V30
+## Bloque de migraciones 3: V21 a V30
 
 | Versión | Tabla | Referencias |
 | --- | --- | --- |
@@ -615,7 +638,7 @@ las columnas no marcadas son obligatorias, incluidas `encounters.ended_at`,
 proporcionarse estas fechas al insertar registros; admitir procesos abiertos
 sin fecha de finalización requeriría acordar un cambio del esquema.
 
-## Entrega 4: V31 a V40
+## Bloque de migraciones 4: V31 a V40
 
 | Versión | Tabla |
 | --- | --- |
@@ -643,7 +666,7 @@ diagrama no especifica un límite. PostgreSQL permite esta declaración.
 queda pendiente de corregir los tipos mediante una decisión sobre el esquema.
 Las tablas de este bloque se crean antes de las tablas de chat que las usan.
 
-## Entrega 5: V41 a V50
+## Bloque de migraciones 5: V41 a V50
 
 | Versión | Tabla | Referencias |
 | --- | --- | --- |
@@ -669,7 +692,7 @@ porque no aparece en el diagrama. `closed_by` conserva UUID sin FK, al no tener
 marca FK ni una relación dibujada. Los nombres de message_types y
 escalations_statuses no llevan UNIQUE, porque no tienen marca U.
 
-## Entrega 6: V51 y V52
+## Bloque de migraciones 6: V51 y V52
 
 | Versión | Tabla | Referencias |
 | --- | --- | --- |
@@ -684,7 +707,7 @@ sin añadir restricciones UNIQUE ni acciones de borrado que no figuren en el dia
 
 Con esta entrega están creadas las 52 migraciones, de V1 a V52. La relación
 entre modelos de IA y proveedores sigue pendiente por la incompatibilidad de
-tipos documentada en la entrega 4.
+tipos documentada en el bloque de migraciones 4.
 
 ## Conexión y ejecución
 

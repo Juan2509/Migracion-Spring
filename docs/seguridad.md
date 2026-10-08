@@ -1,5 +1,11 @@
 # Seguridad HTTP y pruebas H2
 
+Esta guía describe la configuración técnica disponible actualmente. Forma
+parte del avance de la [entrega académica 2](entrega-2-seguridad-jwt.md), cuyo
+requisito JWT sigue pendiente. HTTP Basic y el token CSRF no son JWT.
+H2 también permite verificar las migraciones de la
+[entrega académica 1](entrega-1-migraciones-ddd.md).
+
 La seguridad reside en `infrastructure/security`: `config` contiene la cadena
 de filtros y `adapters/in/rest` expone el token CSRF. Los modulos `domain` y
 `application` permanecen independientes de Spring Security.
